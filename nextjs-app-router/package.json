@@ -1,0 +1,34 @@
+{
+  "name": "sekyro-example-nextjs-app-router",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Sekyro AI sample: Next.js App Router with a Server Action, @sekyro/react and a webhook route handler.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "models": "node scripts/copy-models.mjs",
+    "predev": "npm run models",
+    "dev": "next dev",
+    "prebuild": "npm run models",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sekyro/node": "1.0.0-rc.17",
+    "@sekyro/react": "0.1.0-rc.19",
+    "@sekyro/web": "0.1.0-rc.22",
+    "next": "16.4.5",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "server-only": "0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "typescript": "5.9.3"
+  }
+}

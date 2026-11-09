@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sekyro AI web sample</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Sekyro AI web sample</h1>
+      <p>Runs a Sandbox session with <code>@sekyro/web</code> and plain DOM.</p>
+      <button id="start" type="button">Start verification</button>
+      <section id="screen" aria-live="polite"></section>
+      <section id="dev"></section>
+      <section>
+        <h2>Server verdict</h2>
+        <pre id="verdict">No session yet.</pre>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

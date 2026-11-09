@@ -1,0 +1,5 @@
+node_modules/
+dist/
+public/models-v3/
+.env
+.env.local

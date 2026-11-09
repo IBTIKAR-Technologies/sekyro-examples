@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The Flutter tool needs INTERNET in debug builds (hot reload, breakpoints). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Debug only: plain http to the example server on your machine or network. Release builds stay HTTPS-only. -->
+    <application android:networkSecurityConfig="@xml/network_security_config" />
+</manifest>

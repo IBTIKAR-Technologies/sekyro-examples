@@ -1,0 +1,27 @@
+{
+  "name": "sekyro-example-web-vanilla",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Sekyro AI sample: every step of a flow with @sekyro/web and plain DOM, no framework.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "models": "node scripts/copy-models.mjs",
+    "predev": "npm run models",
+    "dev": "vite",
+    "prebuild": "npm run models",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sekyro/web": "0.1.0-rc.22"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "7.3.8"
+  }
+}

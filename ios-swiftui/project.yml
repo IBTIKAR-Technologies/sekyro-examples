@@ -1,0 +1,58 @@
+# XcodeGen project: `xcodegen` writes Example.xcodeproj (not committed).
+# Build settings you can override, e.g. `xcodebuild ... EXAMPLE_SERVER_URL=http://<host>:4000`:
+#   EXAMPLE_SERVER_URL   the examples/node-express server (Info.plist key ExampleServerURL)
+#   PRODUCT_BUNDLE_IDENTIFIER, DEVELOPMENT_TEAM   your own, to run on a device
+name: Example
+options:
+  deploymentTarget: { iOS: "15.0" }
+  developmentLanguage: en
+packages:
+  SekyroKit:
+    url: https://github.com/IBTIKAR-Technologies/sekyro-ios-dist
+    exactVersion: 0.1.0-rc.16
+targets:
+  Example:
+    type: application
+    platform: iOS
+    sources: [Sources]
+    dependencies: [{ package: SekyroKit, product: SekyroKit }]
+    # Debug only: plain http to the example server on your Mac or network. The ATS local-networking exception and the
+    # local-network prompt text are added to the BUILT Info.plist of Debug builds; Release keeps strict ATS.
+    postBuildScripts:
+      - name: Debug local-network access
+        basedOnDependencyAnalysis: false
+        inputFiles: [$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)]
+        script: |
+          [ "$CONFIGURATION" = "Debug" ] || exit 0
+          PLIST="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+          /usr/libexec/PlistBuddy -c "Delete :NSAppTransportSecurity" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" -c "Add :NSAppTransportSecurity:NSAllowsLocalNetworking bool true" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Delete :NSLocalNetworkUsageDescription" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSLocalNetworkUsageDescription string 'Debug builds reach the example server on your local network.'" "$PLIST"
+    settings:
+      base:
+        INFOPLIST_FILE: Sources/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: ai.sekyro.examples.iosswiftui
+        EXAMPLE_SERVER_URL: http://localhost:4000
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: Example.entitlements
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        # The Debug local-network script edits the built Info.plist.
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+  ExampleTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [Tests]
+    dependencies: [{ target: Example }]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: ai.sekyro.examples.iosswiftui.tests
+        SWIFT_VERSION: "5.0"
+schemes:
+  Example:
+    build: { targets: { Example: all, ExampleTests: [test] } }
+    test: { targets: [ExampleTests] }

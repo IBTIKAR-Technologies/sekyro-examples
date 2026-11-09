@@ -1,0 +1,7 @@
+node_modules/
+.next/
+next-env.d.ts
+public/models-v3/
+.env
+.env.local
+*.tsbuildinfo

@@ -1,0 +1,21 @@
+name: sekyro_example
+description: "Sekyro AI example: the sekyro_flutter drop-in in a Flutter app."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.2
+  sekyro_flutter: 0.1.0-rc.11
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,7 @@
+# Offline smoke (any emulator or simulator, no server needed): the app launches and shows its start button.
+appId: ai.sekyro.examples.reactnative
+---
+- launchApp
+- assertVisible: "Sekyro React Native example"
+- assertVisible:
+    id: "start"
