@@ -50,15 +50,14 @@ are only in development builds (`__DEV__`): a release bundle does not contain th
 
 ## Receive the webhook
 
-Webhooks go to the server, not to the app. Once the Sekyro CLI (`@sekyro/cli`) is published, forward them to
-`node-express` with:
+Webhooks go to the server, not to the app. Forward them to `node-express` with the Sekyro CLI:
 
 ```sh
 npx @sekyro/cli listen --forward-to http://localhost:4000/webhooks/sekyro
 ```
 
-Until then, expose the server through a tunnel of your choice and add `https://<tunnel host>/webhooks/sekyro` as a
-webhook endpoint of your Sandbox key in the dashboard. The server logs each verified event and lists them at `GET /events`.
+See the [`node-express`](../node-express) README for the signing secret. The server logs each verified event and
+lists them at `GET /events`.
 
 ## Go live
 

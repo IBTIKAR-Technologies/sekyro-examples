@@ -69,7 +69,7 @@ const VERSION = String.raw`\d+\.\d+\.\d+(?:-[0-9A-Za-z.]+)?`;
 /** Each pin: where it is written and how to find it. Missing files are skipped (a sample not merged yet). */
 const npmPin = (pkg) => ({ pattern: new RegExp(String.raw`("${pkg.replace("/", "\\/")}":\s*")(${VERSION})(")`, "g") });
 const PINS = [
-  ...["@sekyro/node", "@sekyro/web", "@sekyro/react", "@sekyro/react-native"].map((pkg) => ({
+  ...["@sekyro/node", "@sekyro/web", "@sekyro/react", "@sekyro/react-native", "@sekyro/cli"].map((pkg) => ({
     label: pkg,
     latest: () => npmNext(pkg),
     files: ["node-express", "web-vanilla", "react-vite", "nextjs-app-router", "vue", "angular", "react-native"].map((s) => `${s}/package.json`),

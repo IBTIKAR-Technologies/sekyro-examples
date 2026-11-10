@@ -54,21 +54,22 @@ curl -X POST localhost:4000/demo/finish/<sessionId>
 curl localhost:4000/sessions/<sessionId>     # "status": "verified"
 ```
 
-The route calls `sekyro.sessions.simulate(id, { status: "verified" })`. Sekyro AI refuses it for a Live key, and this
+The route calls `sekyro.test.sessions.simulate(id, { status: "verified" })`. Sekyro AI refuses it for a Live key, and this
 server refuses it before calling when the key is not a Sandbox key.
 
 ## Receive the webhook
 
-Once the Sekyro CLI (`@sekyro/cli`) is published, forward Sandbox webhooks to this server with:
+Forward Sandbox webhooks to this server with the Sekyro CLI, in a second terminal:
 
 ```sh
-npx @sekyro/cli listen --forward-to http://localhost:4000/webhooks/sekyro
+npm run dev:webhooks     # sekyro listen --forward-to http://localhost:4000/webhooks/sekyro
 ```
 
-Until then, expose the server through a tunnel of your choice and add `https://<tunnel host>/webhooks/sekyro` as a
-Sandbox webhook endpoint in the dashboard (your app, then Webhooks). Put its signing secret in
-`SEKYRO_WEBHOOK_SECRET` and restart. After a finish, `GET /events` lists `session.started` and `session.verified`
-with `signature: "ok"`.
+It reads `SEKYRO_API_KEY` from the environment (export it in that terminal; the CLI takes Sandbox keys only) and
+prints the signing secret of its forwarding endpoint. Put that secret in `SEKYRO_WEBHOOK_SECRET` and restart the
+server. Pass `--keep` (`npm run dev:webhooks -- --keep`) to keep the same endpoint and secret between runs. After a
+finish, `GET /events` lists `session.started` and `session.verified` with `signature: "ok"`. To send a sample of any
+event: `npx sekyro trigger session.verified`.
 
 ## Go live
 

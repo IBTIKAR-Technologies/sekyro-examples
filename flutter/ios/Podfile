@@ -31,7 +31,7 @@ target 'Runner' do
   use_frameworks!
 
   # SekyroKit is not on the CocoaPods trunk: the podspec of the public dist repo at the version sekyro_flutter pins.
-  pod 'SekyroKit', :podspec => 'https://raw.githubusercontent.com/IBTIKAR-Technologies/sekyro-ios-dist/0.1.0-rc.16/SekyroKit.podspec'
+  pod 'SekyroKit', :podspec => 'https://raw.githubusercontent.com/IBTIKAR-Technologies/sekyro-ios-dist/0.1.0-rc.18/SekyroKit.podspec'
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do

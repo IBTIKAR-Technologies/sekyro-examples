@@ -39,20 +39,20 @@ Checks: `npm run build` and `npm run typecheck`.
 
 In `npm run dev`, a **Finish with test data** button appears once a session starts. It calls the
 `finishWithTestData` Server Action, which ends the Sandbox session `verified` with
-`sekyro.sessions.simulate(id, { status: "verified" })`. The action refuses outside `next dev` and with a Live key,
+`sekyro.test.sessions.simulate(id, { status: "verified" })`. The action refuses outside `next dev` and with a Live key,
 and a production build does not render the button.
 
 ## Receive the webhook
 
-Once the Sekyro CLI (`@sekyro/cli`) is published, forward Sandbox webhooks to the route handler with:
+Forward Sandbox webhooks to the route handler with the Sekyro CLI, in a second terminal:
 
 ```sh
 npx @sekyro/cli listen --forward-to http://localhost:3000/api/webhooks/sekyro
 ```
 
-Until then, expose `localhost:3000` through a tunnel of your choice and add
-`https://<tunnel host>/api/webhooks/sekyro` as a Sandbox webhook endpoint in the dashboard (your app, then Webhooks).
-Put its signing secret in `SEKYRO_WEBHOOK_SECRET` and restart. After a finish, the page lists `session.started` and
+It reads `SEKYRO_API_KEY` from the environment (Sandbox keys only) and prints the signing secret of its forwarding
+endpoint: put it in `SEKYRO_WEBHOOK_SECRET` and restart. Pass `--keep` to keep the same endpoint and secret between
+runs. After a finish, the page lists `session.started` and
 `session.verified` with `signature: "ok"`. The list lives in memory (`lib/events.ts`); a real app stores deliveries
 and de-duplicates them on the envelope `id`.
 

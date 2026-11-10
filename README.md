@@ -1,8 +1,5 @@
 # Sekyro AI sample apps
 
-This repository is published from the Sekyro AI codebase, where the samples are built and tested against each
-SDK release. Pull requests here are not merged; for questions or problems, write to support@sekyro.ai.
-
 Small, runnable apps that each take a [Sekyro AI](https://sekyro.ai) Sandbox session from start to a verified result
 and a webhook received, with no phone and no document: a **Finish with test data** action ends the session in
 development builds.
@@ -12,6 +9,8 @@ development builds.
 | [`node-express`](node-express) | The server every UI sample talks to: create a session, read the verdict, receive and verify webhooks, finish with test data | `@sekyro/node` |
 | [`web-vanilla`](web-vanilla) | Every step of a flow with plain DOM, no framework | `@sekyro/web` |
 | [`react-vite`](react-vite) | `<SekyroVerification>` in a Vite React app | `@sekyro/react` |
+| [`vue`](vue) | `<sekyro-verification>` in a Vite Vue 3 app | `@sekyro/elements` |
+| [`angular`](angular) | `<sekyro-verification>` in an Angular app (standalone components) | `@sekyro/elements` |
 | [`nextjs-app-router`](nextjs-app-router) | Server Action, client component and webhook route handler in one Next.js app (its own server) | `@sekyro/node`, `@sekyro/react` |
 | [`react-native`](react-native) | The React Native drop-in (New Architecture) | `@sekyro/react-native` |
 | [`flutter`](flutter) | The Flutter drop-in | `sekyro_flutter` |
@@ -31,14 +30,15 @@ Every sample pins a published SDK version and builds on its own: copy its folder
 
 ## The webhook step
 
-Webhooks go to your server. Once the Sekyro CLI (`@sekyro/cli`) is published:
+Webhooks go to your server. The Sekyro CLI forwards your Sandbox webhooks to it with their real signature, no
+tunnel needed:
 
 ```sh
 npx @sekyro/cli listen --forward-to http://localhost:4000/webhooks/sekyro
 ```
 
-Until then, expose the server through a tunnel of your choice and add the tunnel URL as a Sandbox webhook endpoint
-in the dashboard (your app, then Webhooks); each sample's README shows the path.
+It prints the signing secret your server verifies with; each sample's README shows the path and where the secret
+goes. `npx @sekyro/cli trigger session.verified` sends a sample of any event.
 
 ## Going live
 
@@ -49,3 +49,5 @@ A Live key and a Live webhook endpoint, nothing else in the code changes. See "S
 
 The samples are under the MIT license (`LICENSE`). The Sekyro AI SDKs they install have their own license, named in
 each package.
+
+Questions or problems: support@sekyro.ai.

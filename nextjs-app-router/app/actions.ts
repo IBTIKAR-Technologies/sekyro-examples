@@ -40,7 +40,7 @@ export async function finishWithTestData(sessionId: string): Promise<Verdict> {
     throw new Error("Finish with test data runs only in development with a Sandbox key");
   }
   try {
-    return toVerdict(await sekyro().sessions.simulate(sessionId, { status: "verified" }));
+    return toVerdict(await sekyro().test.sessions.simulate(sessionId, { status: "verified" }));
   } catch (err) {
     if (err instanceof SekyroApiError) throw new Error(`Sekyro AI ${err.status} ${err.code}`);
     throw err;

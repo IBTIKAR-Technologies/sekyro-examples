@@ -1,0 +1,33 @@
+{
+  "name": "sekyro-example-vue",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Sekyro AI sample: <sekyro-verification> from @sekyro/elements in a Vite Vue 3 app.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "models": "node scripts/copy-models.mjs",
+    "predev": "npm run models",
+    "dev": "vite",
+    "prebuild": "npm run models",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@sekyro/elements": "0.1.0-rc.0",
+    "@sekyro/web": "0.1.0-rc.23",
+    "vue": "3.5.22"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1",
+    "@vitejs/plugin-vue": "6.0.1",
+    "typescript": "5.9.3",
+    "vite": "7.3.8",
+    "vue-tsc": "3.1.0"
+  }
+}

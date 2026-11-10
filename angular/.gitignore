@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.angular/
+public/models-v3/
+test-results/
+playwright-report/
+.env

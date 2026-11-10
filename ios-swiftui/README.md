@@ -14,7 +14,7 @@ shows or logs.
 - The [`node-express`](../node-express) example running with a Sandbox key (`SEKYRO_API_KEY`)
 
 SekyroKit comes from Swift Package Manager: `https://github.com/IBTIKAR-Technologies/sekyro-ios-dist`, exact version
-`0.1.0-rc.16` (see `project.yml`).
+`0.1.0-rc.18` (see `project.yml`).
 
 ## Run
 
@@ -56,16 +56,14 @@ under `#if DEBUG`, so Release builds do not contain it.
 
 ## Receive the webhook
 
-Webhooks go to the server, not to the app. Once the Sekyro CLI (`@sekyro/cli`) is published, forward them to
-`node-express` with:
+Webhooks go to the server, not to the app. Forward them to `node-express` with the Sekyro CLI:
 
 ```sh
 npx @sekyro/cli listen --forward-to http://localhost:4000/webhooks/sekyro
 ```
 
-Until then, expose the server through a tunnel of your choice and add `https://<tunnel host>/webhooks/sekyro` as a
-webhook endpoint of your Sandbox key in the dashboard. The server logs each verified event and lists them at
-`GET /events`.
+See the [`node-express`](../node-express) README for the signing secret. The server logs each verified event and
+lists them at `GET /events`.
 
 ## Go live
 

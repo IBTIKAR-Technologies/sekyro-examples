@@ -37,14 +37,13 @@ lazily only when `import.meta.env.DEV` is true, so `npm run build` leaves it out
 
 ## Receive the webhook
 
-Webhooks go to the server, not to the page. Once the Sekyro CLI (`@sekyro/cli`) is published, forward them to
-`node-express` with:
+Webhooks go to the server, not to the page. Forward them to `node-express` with the Sekyro CLI:
 
 ```sh
 npx @sekyro/cli listen --forward-to http://localhost:4000/webhooks/sekyro
 ```
 
-Until then, use a tunnel to the server; see the [`node-express`](../node-express) README.
+See the [`node-express`](../node-express) README for the signing secret.
 
 ## Go live
 

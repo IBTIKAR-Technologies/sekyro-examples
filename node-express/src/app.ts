@@ -111,7 +111,7 @@ export function createApp(config: AppConfig): express.Express {
       res.status(403).json({ error: "sandbox_only" });
       return;
     }
-    const session = await sekyro.sessions.simulate(param(req.params.id), { status: "verified" });
+    const session = await sekyro.test.sessions.simulate(param(req.params.id), { status: "verified" });
     res.json(await verdict(config, session));
   }));
 

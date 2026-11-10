@@ -1,0 +1,429 @@
+{
+  "sessionId": "ses_example",
+  "status": "created",
+  "expiresAt": "2026-01-01T00:30:00.000Z",
+  "consentRecorded": true,
+  "orgName": "Example Org",
+  "sdkOrigin": null,
+  "turnstileSiteKey": "1x00000000000000000000AA",
+  "sandbox": true,
+  "simulation": {
+    "otpCode": "000000",
+    "skipCapture": true
+  },
+  "nniBound": false,
+  "idNumberBound": false,
+  "voice": null,
+  "purpose": "human",
+  "acceptedDocumentTypes": [
+    "carte_identite",
+    "passport"
+  ],
+  "acceptedDocuments": {
+    "default": [],
+    "byIssuer": {
+      "MR": [
+        "carte_identite",
+        "passport"
+      ]
+    }
+  },
+  "branding": {
+    "logoUrl": "https://assets.sekyro.ai/branding/fixture/logo.png",
+    "colors": {
+      "brand": "#0f766e",
+      "brandFg": "#ffffff",
+      "bg": "#f8fafc",
+      "surface": "#ffffff",
+      "fg": "#0f172a",
+      "fgMuted": "#475569"
+    },
+    "radius": "md",
+    "fontFamily": "inter",
+    "hideAttribution": true
+  },
+  "capture": {
+    "tuningVersion": "2026-10-24.1",
+    "mode": "self",
+    "liveness": {
+      "clipMs": 2500,
+      "timesliceMs": 1000,
+      "stopGraceMs": 1500,
+      "videoBitrateBps": 2500000,
+      "camera": {
+        "facing": "front",
+        "width": 1280,
+        "height": 720,
+        "frameRateIdeal": 24,
+        "frameRateMax": 30
+      },
+      "keyframe": {
+        "candidates": 4,
+        "windowMs": 600,
+        "spacingMs": 200,
+        "jpegQuality": 0.92,
+        "sharpnessCropFrac": 0.5,
+        "sharpnessResamplePx": 96,
+        "rank": false
+      },
+      "gate": {
+        "qGood": 0.6,
+        "risePerS": 0.9,
+        "fallPerS": 0.25,
+        "readyWindowMs": 500,
+        "centerFalloffIodMultiple": 1.35,
+        "boxEyeOffsetFactor": 0.12,
+        "iodBoxProxyFactor": 0.42,
+        "iodIdeal": [
+          0.12,
+          0.3
+        ],
+        "iodHard": [
+          0.08,
+          0.45
+        ],
+        "rollMaxDeg": 25,
+        "motionVelocityIodPerS": 0.5,
+        "motionTauS": 0.4,
+        "motionDeadband": 0.1,
+        "guide": {
+          "size": 0.6,
+          "centering": 0.6,
+          "pose": 0.6,
+          "exposure": 0.6,
+          "sharpness": 0.35,
+          "motion": 0.5
+        }
+      },
+      "frameQuality": {
+        "sharpRef": 180,
+        "exposureBand": [
+          100,
+          190
+        ],
+        "exposureFalloff": 64,
+        "cropResamplePx": 96
+      },
+      "detector": {
+        "initTimeoutMs": 10000,
+        "profiles": {
+          "low": {
+            "hz": 5,
+            "inputPx": 128
+          },
+          "mid": {
+            "hz": 8,
+            "inputPx": 160
+          },
+          "high": {
+            "hz": 10,
+            "inputPx": 192
+          }
+        }
+      },
+      "challengeTimeoutMs": 6000,
+      "screenRamp": {
+        "nonce": "abababababababababababababababab",
+        "colours": [
+          "blue",
+          "magenta",
+          "yellow"
+        ],
+        "onsetsMs": [
+          820,
+          1470,
+          2120
+        ],
+        "holdMs": 650,
+        "endMs": 2770,
+        "clipMs": 3000,
+        "palette": [
+          "magenta",
+          "yellow",
+          "green",
+          "blue"
+        ]
+      }
+    },
+    "document": {
+      "camera": {
+        "facing": "back",
+        "width": 3840,
+        "height": 2160,
+        "lensSelection": true,
+        "continuousFocus": true,
+        "refocusBeforePhotoMs": 350,
+        "zoomMax": 2,
+        "zoomNoFocusInfo": 1.5,
+        "zoomMinSourcePx": 2160,
+        "fillDistanceM": {
+          "id1": 0.11,
+          "id3": 0.15
+        },
+        "focusMarginFrac": 0.2,
+        "stillSharpnessMin": 0.16,
+        "stillRefusalsMax": 2,
+        "focusFarFillFrac": 0.45,
+        "noDocFarHintMs": 1500,
+        "zoomFallbackMs": 8000
+      },
+      "detectFramePx": 480,
+      "cadenceHz": {
+        "low": 3,
+        "mid": 5,
+        "high": 6
+      },
+      "minScanConfidence": 0.35,
+      "gate": {
+        "minAreaFrac": 0.15,
+        "maxAreaFrac": 0.92,
+        "edgeClipMarginPx": 4,
+        "stableTicks": 3,
+        "iouStableMin": 0.85,
+        "risePerS": 0.9,
+        "fallPerS": 0.25,
+        "guideExposure": 0.6,
+        "guideSharpness": 0.35,
+        "tiltMaxSideRatio": 1.3,
+        "glareMaxSpecularFrac": 0.025,
+        "glareLumaMin": 252
+      },
+      "aspect": {
+        "id1": {
+          "ratio": 1.586,
+          "tolerance": 0.15
+        },
+        "id3": {
+          "ratio": 1.42,
+          "tolerance": 0.2
+        }
+      },
+      "mrzBand": {
+        "minWidthFrac": 0.55,
+        "aspectMin": 4,
+        "aspectMax": 40
+      },
+      "scan": {
+        "fillMin": 0.88,
+        "fillMax": 1.06,
+        "offsetMax": 0.06,
+        "glareMax": 0.012,
+        "sharpnessMin": 180,
+        "edgeConfidenceMin": 1.6,
+        "darkBrightness": 70,
+        "lockMs": 450,
+        "manualShutterMs": 6000,
+        "noReportMs": 2000,
+        "steadyMs": 900,
+        "steadyFillMin": 0.45,
+        "steadyFillMax": 1.3,
+        "steadyFillDelta": 0.06,
+        "steadyOffsetDelta": 0.04,
+        "flipGapMs": 250,
+        "flipFillMin": 0.6,
+        "flipTimeoutMs": 1800,
+        "blurRefuseSharpnessMax": 0.16
+      },
+      "guide": {
+        "fillMin": 0.82,
+        "fillMax": 1.06,
+        "offsetMax": 0.06,
+        "glareMax": 0.025,
+        "sharpnessMin": 180,
+        "edgeConfidenceMin": 1.6,
+        "darkBrightness": 70,
+        "lockMs": 450,
+        "steadyMs": 900,
+        "steadyFillMin": 0.45,
+        "steadyFillMax": 1.3,
+        "steadyFillDelta": 0.06,
+        "steadyOffsetDelta": 0.04,
+        "steadyRefMs": 100,
+        "edgePeakFrac": 0.4,
+        "shapeTolerance": 0.2,
+        "contentMin": 0.1
+      },
+      "ocr": {
+        "enabledOnline": true,
+        "enabledOffline": true,
+        "warmup": true,
+        "maxDeviceLatencyMs": 4000,
+        "deviceTimeoutMs": 8000,
+        "minAvailMemoryMb": 400,
+        "minConfidenceForRetake": 0.8,
+        "minSegmentsForRetake": 4,
+        "submitGraceMs": 0,
+        "reportSampleRate": 1,
+        "readBudgetMs": 10000,
+        "classifyBudgetMs": 20000,
+        "deferArabicOnline": true,
+        "detectorLimit": 960,
+        "detectorThreadsMax": 4,
+        "recognizerThreads": 1,
+        "recognitionWorkersMax": 8,
+        "linesInFlight": 16,
+        "widestLineFirst": true,
+        "scriptRouting": true,
+        "arabicColumnFirst": true,
+        "confidentLatinScore": 0.9,
+        "minLatinLetters": 3,
+        "arabicColumnStart": 0.6,
+        "arabicOnlyScore": 0.5,
+        "portraitProbeLimit": 1024,
+        "web": {
+          "enabledOnline": false,
+          "maxDeviceLatencyMs": 6000,
+          "arabic": false
+        }
+      },
+      "liveMrz": {
+        "enabled": false,
+        "arm": "control",
+        "minEngine": "sekyro-ocr-1",
+        "detectorLimit": 960,
+        "bandMaxWidthPx": 1280,
+        "minBandWidthPx": 900,
+        "bandTop": 0.55,
+        "minIntervalMs": 150,
+        "stableReads": 2,
+        "profileReads": 5,
+        "maxReadMs": 1200,
+        "searchTimeoutMs": 12000,
+        "loadTimeoutMs": 20000,
+        "maxDownloadMs": 20000,
+        "minDeviceMemoryGb": 2,
+        "stillConfirm": true,
+        "hint": true,
+        "reportSampleRate": 1
+      },
+      "frontLock": {
+        "enabled": false,
+        "arm": "control",
+        "minEngine": "sekyro-ocr-1",
+        "detectorLimit": 960,
+        "maxWidthPx": 480,
+        "minIntervalMs": 150,
+        "minLines": 4,
+        "fillMin": 0.55,
+        "fillMax": 0.98,
+        "offsetMax": 0.12,
+        "steadyFillDelta": 0.04,
+        "steadyOffsetDelta": 0.03,
+        "layoutShiftMax": 0.025,
+        "lineCountDelta": 1,
+        "lockMs": 600,
+        "steadyMs": 900,
+        "minFrames": 3,
+        "searchTimeoutMs": 12000
+      },
+      "still": {
+        "jpegQuality": 0.92,
+        "extraCandidates": 2,
+        "candidateSpacingMs": 260,
+        "replaceIfSharperBy": 0.08
+      },
+      "upload": {
+        "good": {
+          "maxPx": 2560,
+          "maxKb": 1600
+        },
+        "mid": {
+          "maxPx": 2240,
+          "maxKb": 1200
+        },
+        "low": {
+          "maxPx": 1920,
+          "maxKb": 700
+        },
+        "qualityStart": 0.92,
+        "qualityFloor": 0.7,
+        "qualityStep": 0.08,
+        "maxSteps": 4
+      }
+    },
+    "icao": {
+      "profile": "id_document",
+      "yawDeg": 7,
+      "pitchDeg": 7,
+      "rollDeg": 5,
+      "pitchOffsetDeg": 4,
+      "holdMs": 500,
+      "alertGraceMs": 3000,
+      "eyes": {
+        "relativeMin": 0.62,
+        "blinkMax": 0.48,
+        "lowerEyeMin": 0.32,
+        "earMin": 0.12
+      },
+      "mouth": {
+        "jawOpenMax": 0.13,
+        "smileMax": 0.28,
+        "puckerMax": 0.48
+      },
+      "lighting": {
+        "faceLuma": [
+          95,
+          185
+        ],
+        "halfRatio": [
+          0.77,
+          1.31
+        ],
+        "clippedMax": 0.015
+      },
+      "background": {
+        "required": true,
+        "lumaMin": 165,
+        "lumaSdMax": 20
+      },
+      "resolution": {
+        "minIodPx": 110,
+        "minWidth": 480,
+        "minHeight": 640
+      }
+    },
+    "livePhoto": {
+      "oneCapture": false,
+      "still": {
+        "minLongSidePx": 1280,
+        "jpegQuality": 0.95
+      }
+    }
+  },
+  "flow": {
+    "id": "flw_fixture",
+    "slug": "default",
+    "version": 1
+  },
+  "plan": {
+    "current": "n_live",
+    "steps": [
+      {
+        "section": "live_photo",
+        "attemptsRemaining": 3,
+        "attempts": {
+          "used": 0,
+          "max": 3
+        },
+        "requiresMobile": true,
+        "id": "n_live",
+        "service": "liveness",
+        "checkType": "liveness",
+        "interaction": "person",
+        "state": "pending"
+      }
+    ],
+    "sections": [
+      {
+        "id": "live_photo",
+        "state": "current"
+      }
+    ]
+  },
+  "hosted": {
+    "origin": "https://verify.sekyro.ai",
+    "hosts": [
+      "verify.sekyro.ai"
+    ]
+  }
+}
