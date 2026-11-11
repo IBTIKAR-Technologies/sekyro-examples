@@ -1,5 +1,6 @@
 "use server";
 // Server Actions: the only code that talks to Sekyro AI with the secret key.
+import { randomUUID } from "node:crypto";
 import { SekyroApiError, type Session } from "@sekyro/node";
 import { isSandboxKey, sekyro } from "@/lib/sekyro";
 
@@ -25,6 +26,9 @@ export async function startVerification(requestedLocale: string): Promise<Starte
   const created = await sekyro().sessions.create({
     ...(process.env.SEKYRO_FLOW ? { flow: process.env.SEKYRO_FLOW } : {}),
     ...(locale ? { locale } : {}),
+    // Your own id for the person, which a flow can require: pass your signed-in user's id here.
+    // This sample has no users, so a random id stands in for it.
+    person: { externalRef: `user_${randomUUID()}` },
   });
   return { sessionId: created.id, clientToken: created.clientToken, expiresAt: created.expiresAt };
 }

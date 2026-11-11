@@ -5,7 +5,7 @@ in this repository talks to:
 
 | Route | What it does |
 |---|---|
-| `POST /sessions` | Creates a session (`{ "locale"?: "en" }`) and returns `{ sessionId, clientToken, expiresAt }`. The client token goes to the device that runs the flow, once. |
+| `POST /sessions` | Creates a session (`{ "locale"?: "en", "externalRef"?: "<your user id>" }`). `externalRef` goes to Sekyro AI as `person.externalRef`, your own id for the person, which a flow can require; without it the sample sends a random id standing in for your user id (pass your own user id in your app) and returns `{ sessionId, clientToken, expiresAt }`. The client token goes to the device that runs the flow, once. |
 | `GET /sessions/:id` | The verdict that counts: `status`, `reason`, `closedBy`, `personId`, and for a verified session the claims of the signed result token, checked with `verifyResultToken` against your key's app and environment. |
 | `POST /webhooks/sekyro` | Receives webhooks, checks the signature with `verifyWebhook` over the raw body, logs each event. |
 | `GET /events` | The last 50 deliveries, newest first, with `signature: "ok"` or why one was refused. |
@@ -29,7 +29,8 @@ npm run dev              # http://localhost:4000
 | Variable | |
 |---|---|
 | `SEKYRO_API_KEY` | Your secret key. A Sandbox key (`sk_test_`) runs in the Sandbox, a Live key in Live. |
-| `SEKYRO_WEBHOOK_SECRET` | The signing secret of the webhook endpoint that points at this server. |
+| `SEKYRO_WEBHOOK_SECRET` | The signing secret of the webhook endpoint that points at this server. Without it the server starts with `POST /webhooks/sekyro` off. |
+| `SEKYRO_API_BASE_URL` | Optional: the API your server calls, for example `https://api-staging.sekyro.ai/api/v2`. Empty calls `https://api.sekyro.ai/api/v2`. `sekyro init` sets it when the CLI targets another API. |
 | `SEKYRO_FLOW` | Optional: the flow slug or `flw_` id. Empty runs the app's default flow. |
 | `EXAMPLE_UI_ORIGINS` | Optional: comma-separated browser origins allowed by CORS (the web examples' dev servers). |
 | `PORT` | Optional: default `4000`. |

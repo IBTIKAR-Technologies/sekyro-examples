@@ -7,6 +7,16 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Page, Route } from "@playwright/test";
 
+/** Stands in for the hosted challenge frame: answers every request with a fixture token. */
+const CHALLENGE_FRAME = `<!doctype html><script>
+parent.postMessage({ type: "sekyro.challenge.ready", v: 1 }, "*");
+addEventListener("message", (e) => {
+  const m = e.data;
+  if (!m || m.type !== "sekyro.challenge.request") return;
+  e.source.postMessage({ type: "sekyro.challenge.token", v: 1, id: m.id, token: "fixture-token" }, e.origin);
+});
+</script>`;
+
 const SERVER = "http://localhost:4000";
 const API = "https://api.sekyro.ai";
 
@@ -77,14 +87,9 @@ export async function installFixture(page: Page): Promise<Fixture> {
     return ok(view);
   });
 
-  // Turnstile (the SDK loads Cloudflare's script for the session's site key) and the branding logo.
-  await page.route("https://challenges.cloudflare.com/**", (route) =>
-    route.fulfill({
-      status: 200,
-      headers: { "content-type": "text/javascript" },
-      body: `window.turnstile = { _p: null, render(c, p) { this._p = p; return "w"; },
-        execute() { const p = this._p; setTimeout(() => p.callback("fixture-token"), 0); }, reset() {}, remove() {} };`,
-    }),
+  // The challenge frame (the SDK embeds the view's `challenge.url`) and the branding logo.
+  await page.route("https://verify.sekyro.ai/challenge**", (route) =>
+    route.fulfill({ status: 200, headers: { "content-type": "text/html" }, body: CHALLENGE_FRAME }),
   );
   await page.route("https://assets.sekyro.ai/**", (route) => route.fulfill({ status: 404, headers: cors, body: "" }));
   return { calls };

@@ -1,5 +1,6 @@
 // The Express app: every route of the sample, with its dependencies passed in
 // so the tests can run it against a fake Sekyro AI API.
+import { randomUUID } from "node:crypto";
 import express, { type ErrorRequestHandler, type RequestHandler } from "express";
 import {
   Sekyro,
@@ -18,8 +19,11 @@ export interface AppConfig {
   sekyro: Sekyro;
   /** The secret key, read only to tell a Sandbox key (`sk_test_`) from a Live one. */
   apiKey: string;
-  /** The signing secret of the webhook endpoint that points at this server. */
-  webhookSecret: string;
+  /**
+   * The signing secret of the webhook endpoint that points at this server. Absent: the webhook
+   * route is off and answers 503 `webhooks_disabled` (the rest of the server works).
+   */
+  webhookSecret?: string;
   /** The flow to run (slug or `flw_` id); absent runs the app's default flow. */
   flow?: string;
   /** Browser origins allowed to call this server (the UI samples' dev servers). */
@@ -63,6 +67,10 @@ export function createApp(config: AppConfig): express.Express {
   // The signature covers the raw bytes: this route reads the body with
   // express.raw and is declared before any JSON parser.
   app.post("/webhooks/sekyro", express.raw({ type: "application/json" }), (req, res) => {
+    if (!config.webhookSecret) {
+      res.status(503).json({ error: "webhooks_disabled" });
+      return;
+    }
     const rawBody = Buffer.isBuffer(req.body) ? req.body.toString("utf8") : "";
     const receivedAt = new Date().toISOString();
     try {
@@ -93,9 +101,15 @@ export function createApp(config: AppConfig): express.Express {
   app.post("/sessions", wrap(async (req, res) => {
     const requested: unknown = req.body?.locale;
     const locale = LOCALES.find((l) => l === requested);
+    // Your own id for the person. In your app, pass your signed-in user's id here; a flow can
+    // require it. This sample forwards the request's externalRef (`sekyro doctor` sends one),
+    // else makes up a random id standing in for your user id.
+    const sent: unknown = req.body?.externalRef;
+    const externalRef = typeof sent === "string" && sent.trim() !== "" ? sent.trim().slice(0, 200) : `user_${randomUUID()}`;
     const created = await sekyro.sessions.create({
       ...(config.flow ? { flow: config.flow } : {}),
       ...(locale ? { locale } : {}),
+      person: { externalRef },
     });
     // The client token goes to the device that runs the flow, once. Never log it.
     res.status(201).json({ sessionId: created.id, clientToken: created.clientToken, expiresAt: created.expiresAt });

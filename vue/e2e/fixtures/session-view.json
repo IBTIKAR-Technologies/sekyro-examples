@@ -5,7 +5,10 @@
   "consentRecorded": true,
   "orgName": "Example Org",
   "sdkOrigin": null,
-  "turnstileSiteKey": "1x00000000000000000000AA",
+  "challenge": {
+    "url": "https://verify.sekyro.ai/challenge",
+    "siteKey": "1x00000000000000000000AA"
+  },
   "sandbox": true,
   "simulation": {
     "otpCode": "000000",
