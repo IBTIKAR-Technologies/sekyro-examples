@@ -44,14 +44,20 @@ and a production build does not render the button.
 
 ## Receive the webhook
 
-Forward Sandbox webhooks to the route handler with the Sekyro CLI, in a second terminal:
+Forward Sandbox webhooks to the route handler with the Sekyro CLI. Sign in once: the command opens your browser,
+where you approve the login with Sandbox full access, and keeps an access token on your machine.
+
+```sh
+npx @sekyro/cli login
+```
+
+Then, in a second terminal:
 
 ```sh
 npx @sekyro/cli listen --forward-to http://localhost:3000/api/webhooks/sekyro
 ```
 
-It reads `SEKYRO_API_KEY` from the environment (Sandbox keys only) and prints the signing secret of its forwarding
-endpoint: put it in `SEKYRO_WEBHOOK_SECRET` and restart. Pass `--keep` to keep the same endpoint and secret between
+It prints the signing secret of its forwarding endpoint: put it in `SEKYRO_WEBHOOK_SECRET` and restart. Pass `--keep` to keep the same endpoint and secret between
 runs. After a finish, the page lists `session.started` and
 `session.verified` with `signature: "ok"`. The list lives in memory (`lib/events.ts`); a real app stores deliveries
 and de-duplicates them on the envelope `id`.

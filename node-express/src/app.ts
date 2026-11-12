@@ -50,7 +50,10 @@ export interface SessionVerdict {
   reason: Session["reason"] | null;
   closedBy: Session["closedBy"] | null;
   personId: string | null;
-  /** Verified sessions only: the claims of the signed result token, checked here. */
+  /**
+   * Verified sessions only: the claims of the signed result token, checked here. `level` is 1 Contact, 2 Human or
+   * 3 Identity; to require a particular proof, compare `assurance` with a list, for example `["registry_biometric"]`.
+   */
   verified: Pick<VerifiedResult, "level" | "assurance" | "verifiedAt" | "personId"> | null;
 }
 

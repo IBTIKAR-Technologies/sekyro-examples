@@ -41,9 +41,11 @@ lives in `src/finish.ts`, loaded only when `import.meta.env.DEV` is true, so `np
 
 ## Receive the webhook
 
-Webhooks go to the server, not to the page. Forward them to `node-express` with the Sekyro CLI:
+Webhooks go to the server, not to the page. Forward them to `node-express` with the Sekyro CLI: sign in once
+(approve the login in your browser with Sandbox full access), then listen.
 
 ```sh
+npx @sekyro/cli login
 npx @sekyro/cli listen --forward-to http://localhost:4000/webhooks/sekyro
 ```
 

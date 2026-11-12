@@ -31,13 +31,20 @@ Every sample pins a published SDK version and builds on its own: copy its folder
 ## The webhook step
 
 Webhooks go to your server. The Sekyro CLI forwards your Sandbox webhooks to it with their real signature, no
-tunnel needed:
+tunnel needed. Sign in once: the command opens your browser, where you approve the login with Sandbox full access,
+and keeps an access token on your machine.
 
 ```sh
-npx @sekyro/cli listen --forward-to http://localhost:4000/webhooks/sekyro
+npx @sekyro/cli login
 ```
 
-It prints the signing secret your server verifies with; each sample's README shows the path and where the secret
+Then forward the webhooks to your server's webhook route:
+
+```sh
+npx @sekyro/cli listen --forward-to <url>
+```
+
+It prints the signing secret your server verifies with; each sample's README gives `<url>` and where the secret
 goes. `npx @sekyro/cli trigger session.verified` sends a sample of any event.
 
 ## Going live

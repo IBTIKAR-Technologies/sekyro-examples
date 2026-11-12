@@ -60,14 +60,20 @@ server refuses it before calling when the key is not a Sandbox key.
 
 ## Receive the webhook
 
-Forward Sandbox webhooks to this server with the Sekyro CLI, in a second terminal:
+Forward Sandbox webhooks to this server with the Sekyro CLI. Sign in once: the command opens your browser, where
+you approve the login with Sandbox full access, and keeps an access token on your machine.
+
+```sh
+npx @sekyro/cli login
+```
+
+Then, in a second terminal:
 
 ```sh
 npm run dev:webhooks     # sekyro listen --forward-to http://localhost:4000/webhooks/sekyro
 ```
 
-It reads `SEKYRO_API_KEY` from the environment (export it in that terminal; the CLI takes Sandbox keys only) and
-prints the signing secret of its forwarding endpoint. Put that secret in `SEKYRO_WEBHOOK_SECRET` and restart the
+It prints the signing secret of its forwarding endpoint. Put that secret in `SEKYRO_WEBHOOK_SECRET` and restart the
 server. Pass `--keep` (`npm run dev:webhooks -- --keep`) to keep the same endpoint and secret between runs. After a
 finish, `GET /events` lists `session.started` and `session.verified` with `signature: "ok"`. To send a sample of any
 event: `npx sekyro trigger session.verified`.
