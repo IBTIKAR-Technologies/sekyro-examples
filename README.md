@@ -47,6 +47,25 @@ npx @sekyro/cli listen --forward-to <url>
 It prints the signing secret your server verifies with; each sample's README gives `<url>` and where the secret
 goes. `npx @sekyro/cli trigger session.verified` sends a sample of any event.
 
+## How the samples are built
+
+Every sample follows the integration rules of [Best practices](https://docs.sekyro.ai/en/getting-started/best-practices), with the shared logic in the servers
+([`node-express`](node-express) and [`nextjs-app-router`](nextjs-app-router)) and thin clients:
+
+- the keys stay on the server, and a fixed demo user gives every session a stable `externalRef`;
+- a session is created only when the person presses Verify or Confirm it is you, with one idempotency key per press;
+- every create sends `resumeOpen: true` with the person key, so a reload or a second press gets the person's open session
+  back (`resumed: true`, with its existing client token) instead of a new one;
+- the server decides every status and reason (`decide()`), from the webhook (signature checked, each event id handled
+  once, the session re-read) and its own reads, and keeps each demo user's person id and state in memory;
+- the flow stays on screen until the person presses the result screen's button ("Continue" in the web SDKs; the native SDKs show it from their next release);
+- a verified session counts only with an accepted assurance, and the result token is verified on the server;
+- Confirm it is you re-checks a returning person with `person.reuse` when they are `returningReady`, and falls back to
+  a full verification otherwise. A re-check works on any device: a new live capture is matched on the server with the
+  portrait stored at the last full verification. `node-express` with `react-vite`, and `nextjs-app-router`, also show
+  Raise to Identity (`step_up`);
+- each README says how to reach every branch in the Sandbox.
+
 ## Going live
 
 A Live key and a Live webhook endpoint, nothing else in the code changes. See "Sandbox and Live" at

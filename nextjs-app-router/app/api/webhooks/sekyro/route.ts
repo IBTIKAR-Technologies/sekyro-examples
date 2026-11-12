@@ -2,7 +2,11 @@
 // `request.text()`, never `request.json()`. `verifyWebhook` uses node:crypto,
 // so this handler runs on the Node runtime.
 import { SekyroWebhookError, signatureFromHeaders, verifyWebhook } from "@sekyro/node";
-import { remember } from "@/lib/events";
+import { after } from "next/server";
+import { firstDelivery, remember } from "@/lib/events";
+import { sekyro } from "@/lib/sekyro";
+import { userStore } from "@/lib/users";
+import { toVerdict } from "@/lib/verdict";
 
 export const runtime = "nodejs";
 
@@ -20,7 +24,17 @@ export async function POST(request: Request): Promise<Response> {
     const data = envelope.data as { sessionId?: string; status?: string };
     remember({ id: envelope.id, event: envelope.event, sessionId: data.sessionId ?? null, status: data.status ?? null, receivedAt, signature: "ok" });
     console.log(`webhook ${envelope.event} ${data.sessionId ?? ""} signature ok`);
-    // Acknowledge fast. Deliveries are at least once: de-duplicate on envelope.id.
+    // Deliveries are at least once: handle each event id once. Events can arrive out of order,
+    // so never apply the event's status: re-read the session after answering.
+    const sessionId = data.sessionId;
+    if (firstDelivery(envelope.id) && sessionId) {
+      after(async () => {
+        // The current state of the session, decided on this server, written to its user.
+        const v = await toVerdict(await sekyro().sessions.get(sessionId));
+        userStore().record(v);
+        console.log(`session ${sessionId} is ${v.status}${v.reason ? ` (${v.reason})` : ""}: ${v.decision.show}`);
+      });
+    }
     return new Response(null, { status: 200 });
   } catch (err) {
     if (!(err instanceof SekyroWebhookError)) throw err;

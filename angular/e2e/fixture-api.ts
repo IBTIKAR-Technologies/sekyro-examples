@@ -44,6 +44,24 @@ export async function installFixture(page: Page): Promise<Fixture> {
     if (req.method() === "POST" && path === "/sessions") {
       return json(route, 201, { sessionId: view.sessionId, clientToken: "fixture-client-token", expiresAt: view.expiresAt });
     }
+    if (req.method() === "GET" && path === "/users") {
+      return json(route, 200, { users: [{ id: "demo-user-1", label: "Demo user 1" }] });
+    }
+    if (req.method() === "GET" && path.startsWith("/users/")) {
+      return json(route, 200, {
+        userId: "demo-user-1",
+        personId: null,
+        sessionId: null,
+        kind: null,
+        status: null,
+        reason: null,
+        closedBy: null,
+        decision: null,
+        returningReady: false,
+        level: null,
+        assurance: null,
+      });
+    }
     if (req.method() === "GET" && path.startsWith("/sessions/")) {
       return json(route, 200, {
         sessionId: view.sessionId,
@@ -52,6 +70,7 @@ export async function installFixture(page: Page): Promise<Fixture> {
         closedBy: view.status === "verified" ? "automatic" : null,
         personId: null,
         verified: null,
+        decision: view.status === "verified" ? { access: true, show: "verified", canRetry: false } : { access: false, show: "continue", canRetry: false },
       });
     }
     return json(route, 404, { error: "not_found" });

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { SekyroError, startSekyro, type SekyroEvent, type SekyroResult } from '@sekyro/react-native';
 import { EXAMPLE_SERVER_URL } from './config';
-import { createExampleServer, isTerminal, type SessionView } from './exampleServer';
+import { createExampleServer, FallbackError, isTerminal, type CreatedSession, type SessionView } from './exampleServer';
 
 // Development builds only: Metro drops this require (and the module) from release bundles.
 const FinishWithTestData: typeof import('./FinishWithTestData').FinishWithTestData | null = __DEV__
@@ -30,7 +30,7 @@ function describeResult(r: SekyroResult): string {
 }
 
 function describeVerdict(v: SessionView): string {
-  const parts = [v.status, v.reason, v.closedBy ? `closed by ${v.closedBy}` : undefined, v.personId ? `person ${v.personId}` : undefined];
+  const parts = [v.show, v.status, v.reason, v.closedBy ? `closed by ${v.closedBy}` : undefined, v.personId ? `person ${v.personId}` : undefined];
   return parts.filter(Boolean).join(' · ');
 }
 
@@ -61,7 +61,9 @@ export default function App() {
     }
   }, []);
 
-  const start = async () => {
+  // Every action creates its session on the tap, never on render. The SDK delivers the finished result only
+  // after the person presses the result screen's button.
+  const run = async (create: () => Promise<CreatedSession>) => {
     setBusy(true);
     setError(null);
     setEvents([]);
@@ -70,13 +72,15 @@ export default function App() {
     polling.current += 1;
     try {
       // The client token is a one-time credential: it is handed to the SDK and never shown or logged.
-      const session = await server.createSession();
+      const session = await create();
       setSessionId(session.sessionId);
       const r = await startSekyro({ clientToken: session.clientToken, onEvent: (e) => setEvents((l) => [...l, e]) });
       setResult(r);
       void pollVerdict(session.sessionId);
     } catch (e) {
-      setError(e instanceof SekyroError ? `Could not start: ${e.code}` : e instanceof Error ? e.message : String(e));
+      // Not re-checkable (not returningReady, revoked, stale): the person runs a full verification instead.
+      if (e instanceof FallbackError) setError(`${e.message} Tap Verify to run a full verification.`);
+      else setError(e instanceof SekyroError ? `Could not start: ${e.code}` : e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
@@ -86,7 +90,9 @@ export default function App() {
     <SafeAreaView style={styles.root}>
       <Text accessibilityRole="header" style={styles.title}>Sekyro React Native example</Text>
       <Text testID="server">{EXAMPLE_SERVER_URL}</Text>
-      <Button testID="start" title="Start verification" onPress={start} disabled={busy} />
+      <Text>Signed in as Demo user 1</Text>
+      <Button testID="start" title="Verify" onPress={() => run(() => server.createSession())} disabled={busy} />
+      <Button testID="recheck" title="Confirm it is you" onPress={() => run(() => server.createRecheck())} disabled={busy} />
       {error ? <Text testID="error" style={styles.error}>{error}</Text> : null}
       {sessionId ? <Text testID="session" selectable>Session {sessionId}</Text> : null}
       {result ? <Text testID="result">SDK result: {describeResult(result)}</Text> : null}

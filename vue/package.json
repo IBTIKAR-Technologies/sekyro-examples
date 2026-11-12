@@ -19,8 +19,8 @@
     "e2e": "playwright test"
   },
   "dependencies": {
-    "@sekyro/elements": "0.1.0-rc.0",
-    "@sekyro/web": "0.1.0-rc.23",
+    "@sekyro/elements": "0.1.0-rc.5",
+    "@sekyro/web": "0.1.0-rc.27",
     "vue": "3.5.22"
   },
   "devDependencies": {

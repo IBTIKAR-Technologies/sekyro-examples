@@ -23,7 +23,9 @@ class ExampleServerTest {
         val created = ExampleServer("http://server.test/", fake).createSession(locale = "fr")
         assertEquals("s1", created.sessionId)
         assertEquals("t1", created.clientToken)
-        assertEquals(Triple("POST", "http://server.test/sessions", """{"locale":"fr"}"""), fake.calls.single())
+        val (method, url, body) = fake.calls.single()
+        assertEquals("POST" to "http://server.test/sessions", method to url)
+        assertTrue(body!!.contains(""""userId":"demo-user-1"""") && body.contains(""""locale":"fr"""") && body.contains(""""attemptId":"""))
     }
 
     @Test

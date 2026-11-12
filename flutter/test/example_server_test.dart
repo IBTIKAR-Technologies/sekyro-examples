@@ -33,7 +33,7 @@ void main() {
     await ExampleServer('http://server.test', client: client).createSession(locale: 'fr');
     expect(seen.method, 'POST');
     expect(seen.url.toString(), 'http://server.test/sessions');
-    expect(jsonDecode(seen.body), {'locale': 'fr'});
+    expect(jsonDecode(seen.body), {'userId': 'demo-user-1', 'attemptId': isA<String>(), 'locale': 'fr'});
   });
 
   test('fails on an error status', () async {

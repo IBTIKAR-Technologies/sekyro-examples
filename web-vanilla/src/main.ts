@@ -12,40 +12,82 @@ import {
   type VerificationLocale,
   type VerificationStep,
 } from "@sekyro/web";
-import { readVerdict, startSession, type Verdict } from "./server";
+import { FallbackError, listUsers, MESSAGES, readUser, readVerdict, startRecheck, type StartedSession, startSession, type Verdict } from "./server";
 import { askChoice, askText, show, text, video } from "./ui";
 
 const ASSET_BASE_URL = "/models-v3"; // npm run models copies the detector assets there
 const locale: VerificationLocale = "en";
 const startButton = document.querySelector<HTMLButtonElement>("#start")!;
+const recheckButton = document.querySelector<HTMLButtonElement>("#recheck")!;
+const userSelect = document.querySelector<HTMLSelectElement>("#user")!;
 const verdictView = document.querySelector<HTMLElement>("#verdict")!;
 const dev = document.querySelector<HTMLElement>("#dev")!;
 const regionName = new Intl.DisplayNames([locale], { type: "region" });
 
 let verification: Verification | undefined;
 let polling: number | undefined;
+let current: string | undefined;
+let lastVerdict: Verdict | undefined;
 
-startButton.addEventListener("click", () => {
-  startButton.disabled = true;
-  start().catch((err: unknown) => {
-    show(text("p", `Could not start: ${String(err)}`, "problem"));
-    startButton.disabled = false;
+// "Signed in as": fixed demo users, so every session carries a stable externalRef.
+listUsers()
+  .then(({ users }) => {
+    userSelect.replaceChildren(...users.map((u) => Object.assign(document.createElement("option"), { value: u.id, textContent: u.label })));
+    refreshUser();
+  })
+  .catch((err: unknown) => show(text("p", String(err), "problem")));
+userSelect.addEventListener("change", refreshUser);
+
+/** "Confirm it is you" shows only when the server says a re-check is possible now. */
+function refreshUser(): void {
+  readUser(userSelect.value)
+    .then((u) => (recheckButton.hidden = !u.returningReady))
+    .catch((err: unknown) => console.warn("user", err));
+}
+
+// Every action creates its session on the click, never on render; one attemptId per click.
+startButton.addEventListener("click", () => run(() => startSession(userSelect.value, locale, crypto.randomUUID())));
+recheckButton.addEventListener("click", () => run(() => startRecheck(userSelect.value, crypto.randomUUID())));
+
+function run(create: () => Promise<StartedSession>): void {
+  startButton.disabled = recheckButton.disabled = userSelect.disabled = true;
+  start(create).catch((err: unknown) => {
+    // Not re-checkable (not returningReady, revoked, stale): offer a full verification instead.
+    if (err instanceof FallbackError) show(text("p", `${err.message} Use Start verification to run a full verification.`));
+    else show(text("p", `Could not start: ${String(err)}`, "problem"));
+    startButton.disabled = recheckButton.disabled = userSelect.disabled = false;
   });
-});
+}
 
-async function start(): Promise<void> {
-  const session = await startSession(locale);
-  showVerdict({ sessionId: session.sessionId, status: "created", reason: null, closedBy: null, personId: null, verified: null });
+async function start(create: () => Promise<StartedSession>): Promise<void> {
+  const session = await create();
+  current = session.sessionId;
+  showVerdict({
+    sessionId: session.sessionId,
+    status: "created",
+    reason: null,
+    closedBy: null,
+    personId: null,
+    verified: null,
+    decision: { access: false, show: "continue", canRetry: false },
+  });
   pollVerdict(session.sessionId);
   if (import.meta.env.DEV) {
     const { mountFinishButton } = await import("./finish");
-    mountFinishButton(dev, session.sessionId, showVerdict);
+    // Test data ends the session on the server, outside the flow: leave the flow at once.
+    mountFinishButton(dev, session.sessionId, (v) => {
+      showVerdict(v);
+      finish();
+    });
   }
 
   verification = createVerification({ clientToken: session.clientToken, locale, rearm: "manual" });
   verification.on("step", (step) => void act(step));
-  // Display only: the server's verdict below is the one to act on.
-  verification.on("result", (result) => console.log("SDK result", result.status, result.reason ?? ""));
+  // A verdict exists: refresh it from the server, the one to act on. The result screen stays.
+  verification.on("result", (result) => {
+    console.log("SDK result", result.status, result.reason ?? "");
+    if (current) readVerdict(current).then(showVerdict).catch((err: unknown) => console.warn("verdict", err));
+  });
   const first = await verification.run?.(); // optional in the type, present since 0.1.0-rc.8
   if (first !== undefined) await act(first);
 }
@@ -102,9 +144,13 @@ async function act(step: VerificationStep): Promise<void> {
       case "processing":
         show(text("p", step.stalled ? "Still checking. This can take a minute." : "Checking."));
         break;
-      case "result":
-        show(text("p", `The flow ended (${step.display}). The server verdict is below.`));
+      case "result": {
+        // Keep the result on screen until the person presses the button, then leave the flow.
+        const done = Object.assign(document.createElement("button"), { type: "button", textContent: "Done" });
+        done.addEventListener("click", finish);
+        show(text("p", `The flow ended (${step.display}).`), done);
         break;
+      }
       default:
         // eid, choice, unsupported: see the web SDK guide; @sekyro/react renders them all.
         show(text("p", `This sample does not render the "${step.kind}" step. Use the React sample, or finish with test data.`));
@@ -126,10 +172,21 @@ function pollVerdict(sessionId: string): void {
 }
 
 function showVerdict(v: Verdict): void {
+  lastVerdict = v;
   verdictView.textContent = JSON.stringify(v, null, 2);
+  // Final on the server: stop polling, but never remove the flow here, the person may be reading the result.
   if (v.status === "verified" || v.status === "not_verified") {
     window.clearInterval(polling);
-    verification?.destroy();
     dev.replaceChildren();
   }
+}
+
+/** The person pressed Done on the result: show what the server decided and allow a new session. */
+function finish(): void {
+  verification?.destroy();
+  verification = undefined;
+  const d = lastVerdict?.decision;
+  show(text("p", d ? `${MESSAGES[d.show] ?? MESSAGES.not_verified}${d.canRetry ? " You can start a new verification." : ""}` : "Done."));
+  startButton.disabled = recheckButton.disabled = userSelect.disabled = false;
+  refreshUser();
 }

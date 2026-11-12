@@ -14,6 +14,8 @@ import {
   type Session,
   type VerifiedResult,
 } from "@sekyro/node";
+import { decide, type Decision } from "./decide.js";
+import { DEMO_USERS, type SessionKind, UserStore } from "./users.js";
 
 export interface AppConfig {
   sekyro: Sekyro;
@@ -28,6 +30,8 @@ export interface AppConfig {
   flow?: string;
   /** Browser origins allowed to call this server (the UI samples' dev servers). */
   uiOrigins: string[];
+  /** The flow for "Raise to Identity" (a `step_up`): it must prove Identity on every path. Default `identity`. */
+  stepUpFlow?: string;
   /** What the result token must say: the key's app and environment, from `GET /me` at startup. */
   resultToken: { appId: string; env: SekyroEnvironment; issuer?: string; fetch?: typeof fetch };
 }
@@ -55,6 +59,8 @@ export interface SessionVerdict {
    * 3 Identity; to require a particular proof, compare `assurance` with a list, for example `["registry_biometric"]`.
    */
   verified: Pick<VerifiedResult, "level" | "assurance" | "verifiedAt" | "personId"> | null;
+  /** What the app does: access, what to show, whether to offer a new session (src/decide.ts). */
+  decision: Decision;
 }
 
 const MAX_EVENTS = 50;
@@ -63,6 +69,11 @@ const LOCALES = ["ar", "fr", "en", "es", "pt", "de"] as const;
 export function createApp(config: AppConfig): express.Express {
   const { sekyro } = config;
   const events: ReceivedEvent[] = [];
+  // Event ids already handled. Deliveries are at least once, with the same id on every retry.
+  // In your app, keep these in your database.
+  const seen = new Set<string>();
+  // The demo users' verification state, kept current by webhooks and server reads.
+  const users = new UserStore();
   const app = express();
 
   app.use(cors(config.uiOrigins));
@@ -88,9 +99,19 @@ export function createApp(config: AppConfig): express.Express {
         signature: "ok",
       });
       console.log(`webhook ${envelope.event} ${data.sessionId ?? ""} signature ok`);
-      // Acknowledge fast; real work (re-reading the session, updating your
-      // user) goes after the response or into a queue.
+      // Acknowledge fast, then do the work.
       res.sendStatus(200);
+      if (seen.has(envelope.id)) return; // a retry of an event already handled
+      seen.add(envelope.id);
+      // Events can arrive out of order: never apply the event's status, re-read the session.
+      if (data.sessionId) {
+        const sessionId = data.sessionId;
+        sekyro.sessions
+          .get(sessionId)
+          .then((session) => verdict(config, session))
+          .then((v) => users.record(v))
+          .catch((err: unknown) => console.warn(`re-read ${sessionId} failed`, err));
+      }
     } catch (err) {
       if (!(err instanceof SekyroWebhookError)) throw err;
       remember(events, { id: null, event: null, sessionId: null, status: null, receivedAt, signature: err.code });
@@ -101,25 +122,120 @@ export function createApp(config: AppConfig): express.Express {
 
   app.use(express.json());
 
+  // The demo users. In your app, the signed-in user comes from your own session cookie.
+  app.get("/users", (_req, res) => {
+    res.json({ users: DEMO_USERS });
+  });
+
+  // What the page shows for a user: their stored state and whether a re-check is possible now.
+  app.get("/users/:id", wrap(async (req, res) => {
+    const userId = param(req.params.id);
+    const state = users.get(userId);
+    const [person] = await sekyro.people.list({ externalRef: userId, limit: 1 });
+    res.json({
+      ...state,
+      personId: person?.id ?? state.personId,
+      // True when the person is active, has a stored reference portrait and their last full
+      // verification is within the flow's "Returning users" maximum age.
+      returningReady: person?.returningReady ?? false,
+      level: person?.level ?? null,
+      assurance: person?.levelAssurance ?? null,
+    });
+  }));
+
+  // "Verify": a full verification, created when the person clicks, never on render.
   app.post("/sessions", wrap(async (req, res) => {
     const requested: unknown = req.body?.locale;
     const locale = LOCALES.find((l) => l === requested);
-    // Your own id for the person. In your app, pass your signed-in user's id here; a flow can
-    // require it. This sample forwards the request's externalRef (`sekyro doctor` sends one),
-    // else makes up a random id standing in for your user id.
-    const sent: unknown = req.body?.externalRef;
-    const externalRef = typeof sent === "string" && sent.trim() !== "" ? sent.trim().slice(0, 200) : `user_${randomUUID()}`;
-    const created = await sekyro.sessions.create({
-      ...(config.flow ? { flow: config.flow } : {}),
-      ...(locale ? { locale } : {}),
-      person: { externalRef },
-    });
+    // Your own id for the person: the demo user's id, else the request's externalRef (`sekyro doctor`
+    // sends one), else a random id standing in for your user id.
+    const externalRef = userIdOf(req.body) ?? externalRefOf(req.body) ?? `user_${randomUUID()}`;
+    // One idempotency key per click: the page sends the same attemptId when it retries after a
+    // network error, so a retry returns the session already created instead of a second one.
+    const created = await sekyro.sessions.create(
+      {
+        ...(config.flow ? { flow: config.flow } : {}),
+        ...(locale ? { locale } : {}),
+        person: { externalRef },
+        // A reload or a second click gets the person's open session back (resumed: true).
+        resumeOpen: true,
+      },
+      { idempotencyKey: attemptIdOf(req.body) },
+    );
+    users.started(externalRef, created.id, "full");
     // The client token goes to the device that runs the flow, once. Never log it.
-    res.status(201).json({ sessionId: created.id, clientToken: created.clientToken, expiresAt: created.expiresAt });
+    res.status(created.resumed ? 200 : 201).json({
+      sessionId: created.id,
+      clientToken: created.clientToken,
+      expiresAt: created.expiresAt,
+      resumed: created.resumed === true,
+    });
   }));
 
+  // "Confirm it is you": a re-check of a returning person. Only liveness and a face match against the
+  // portrait stored at their last full verification, so it works on any device: nothing is tied to
+  // the device used the first time. Not possible: the page runs a full verification instead.
+  app.post("/sessions/recheck", wrap(async (req, res) => {
+    const externalRef = userIdOf(req.body) ?? externalRefOf(req.body);
+    if (!externalRef) {
+      res.status(400).json({ error: "external_ref_required" });
+      return;
+    }
+    const [person] = await sekyro.people.list({ externalRef, limit: 1 });
+    if (!person?.returningReady) {
+      res.status(409).json({ error: "not_returning_ready", next: "full_verification", message: FALLBACK.not_returning_ready });
+      return;
+    }
+    await personSession(res, externalRef, "recheck", () =>
+      sekyro.sessions.create(
+        { ...(config.flow ? { flow: config.flow } : {}), person: { reuse: { externalRef, mode: "recheck" } }, resumeOpen: true },
+        { idempotencyKey: attemptIdOf(req.body) },
+      ),
+    );
+  }));
+
+  // "Raise to Identity": a step-up from Human to Identity, on one live capture matched to the stored face.
+  app.post("/sessions/step-up", wrap(async (req, res) => {
+    const externalRef = userIdOf(req.body) ?? externalRefOf(req.body);
+    if (!externalRef) {
+      res.status(400).json({ error: "external_ref_required" });
+      return;
+    }
+    await personSession(res, externalRef, "step_up", () =>
+      sekyro.people.createSession(
+        externalRef,
+        { mode: "step_up", flow: config.stepUpFlow ?? "identity", resumeOpen: true },
+        { idempotencyKey: attemptIdOf(req.body) },
+      ),
+    );
+  }));
+
+  /** Creates a session for a known person; a person who cannot use it gets a full verification instead. */
+  async function personSession(
+    res: express.Response,
+    externalRef: string,
+    kind: SessionKind,
+    create: () => Promise<{ id: string; clientToken: string; expiresAt: string }>,
+  ): Promise<void> {
+    try {
+      const created = await create();
+      users.started(externalRef, created.id, kind);
+      res.status(201).json({ sessionId: created.id, clientToken: created.clientToken, expiresAt: created.expiresAt });
+    } catch (err) {
+      const code = err instanceof SekyroApiError ? err.code : undefined;
+      if (code !== undefined && code in FALLBACK) {
+        res.status(409).json({ error: code, next: "full_verification", message: FALLBACK[code] });
+        return;
+      }
+      throw err;
+    }
+  }
+
+  // The verdict that counts, read on the server. The page calls it when the SDK says a verdict exists.
   app.get("/sessions/:id", wrap(async (req, res) => {
-    res.json(await verdict(config, await sekyro.sessions.get(param(req.params.id))));
+    const v = await verdict(config, await sekyro.sessions.get(param(req.params.id)));
+    users.record(v);
+    res.json(v);
   }));
 
   app.post("/demo/finish/:id", wrap(async (req, res) => {
@@ -129,7 +245,9 @@ export function createApp(config: AppConfig): express.Express {
       return;
     }
     const session = await sekyro.test.sessions.simulate(param(req.params.id), { status: "verified" });
-    res.json(await verdict(config, session));
+    const v = await verdict(config, session);
+    users.record(v);
+    res.json(v);
   }));
 
   app.get("/events", (_req, res) => {
@@ -166,7 +284,38 @@ async function verdict(config: AppConfig, session: Session): Promise<SessionVerd
     closedBy: session.closedBy ?? null,
     personId: verified?.personId ?? session.personId ?? null,
     verified,
+    // Decide from the verified token's assurance when there is one, else from the session view.
+    decision: decide(session, verified?.assurance ?? session.assurance),
   };
+}
+
+/** Why a known person cannot use a re-check or step-up now: the page offers a full verification. */
+const FALLBACK: Record<string, string> = {
+  not_returning_ready: "We need a full verification first: there is no recent verified portrait to compare with.",
+  subject_not_found: "We need a full verification first: this person has not passed one yet.",
+  subject_no_reference: "We need a full verification first: there is no verified portrait to compare with.",
+  subject_stale: "The last full verification is too old. Please verify again in full.",
+  reuse_disabled: "This flow does not re-check returning people. Please verify in full.",
+  subject_revoked: "This verification was withdrawn. Please verify again in full.",
+  step_up_flow_too_weak: "The step-up flow does not prove Identity on every path. Set SEKYRO_STEP_UP_FLOW to an Identity flow.",
+};
+
+/** A demo user's id from the request, or undefined. */
+function userIdOf(body: unknown): string | undefined {
+  const sent = (body as { userId?: unknown } | undefined)?.userId;
+  return DEMO_USERS.find((u) => u.id === sent)?.id;
+}
+
+/** The request's externalRef, trimmed, or undefined. */
+function externalRefOf(body: unknown): string | undefined {
+  const sent = (body as { externalRef?: unknown } | undefined)?.externalRef;
+  return typeof sent === "string" && sent.trim() !== "" ? sent.trim().slice(0, 200) : undefined;
+}
+
+/** The client's attemptId (one per click, reused on a retry), else a new key for this request. */
+function attemptIdOf(body: unknown): string {
+  const sent = (body as { attemptId?: unknown } | undefined)?.attemptId;
+  return typeof sent === "string" && /^[A-Za-z0-9_-]{8,100}$/.test(sent) ? sent : randomUUID();
 }
 
 function remember(events: ReceivedEvent[], event: ReceivedEvent): void {
@@ -202,6 +351,11 @@ function cors(origins: string[]): RequestHandler {
 }
 
 const apiErrors: ErrorRequestHandler = (err, _req, res, _next) => {
+  if (err instanceof SekyroApiError && err.status === 429) {
+    // A rate limit: tell the page how long to wait before it offers to try again.
+    res.status(429).json({ error: err.code, retryAfterSeconds: err.retryAfterSeconds ?? 60 });
+    return;
+  }
   if (err instanceof SekyroApiError) {
     console.warn(`Sekyro AI ${err.status} ${err.code} (request ${err.requestId ?? "n/a"})`);
     res.status(err.status >= 400 && err.status < 500 ? err.status : 502).json({ error: err.code });

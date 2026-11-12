@@ -10,7 +10,9 @@
     <main>
       <h1>Sekyro AI web sample</h1>
       <p>Runs a Sandbox session with <code>@sekyro/web</code> and plain DOM.</p>
+      <label>Signed in as <select id="user"></select></label>
       <button id="start" type="button">Start verification</button>
+      <button id="recheck" type="button" hidden>Confirm it is you</button>
       <section id="screen" aria-live="polite"></section>
       <section id="dev"></section>
       <section>

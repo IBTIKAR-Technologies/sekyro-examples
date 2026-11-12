@@ -63,7 +63,9 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Text("Sekyro Android example", style = MaterialTheme.typography.titleLarge)
                         Text(server.baseUrl, style = MaterialTheme.typography.bodySmall)
-                        Button(onClick = ::start, enabled = !busy) { Text("Start verification") }
+                        Text("Signed in as Demo user 1")
+                        Button(onClick = { start { server.createSession() } }, enabled = !busy) { Text("Verify") }
+                        Button(onClick = { start { server.createRecheck() } }, enabled = !busy) { Text("Confirm it is you") }
                         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                         sessionId?.let { id ->
                             SelectionContainer { Text("Session $id") }
@@ -84,7 +86,11 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    private fun start() {
+    /**
+     * Every action creates its session on the tap, never on render. Sekyro.start calls back with the finished result
+     * only after the person presses the result screen's button.
+     */
+    private fun start(create: suspend () -> CreatedSession) {
         busy = true
         error = null
         events.clear()
@@ -94,9 +100,12 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             try {
                 // The client token is a one-time credential: it is handed to the SDK and never shown or logged.
-                val session = server.createSession()
+                val session = create()
                 sessionId = session.sessionId
                 Sekyro.start(this@MainActivity, SekyroConfig(clientToken = session.clientToken)) { onResult(session.sessionId, it) }
+            } catch (e: FullVerificationNeeded) {
+                // Not re-checkable (not returningReady, revoked, stale): the person runs a full verification instead.
+                error = "${e.message} Tap Verify to run a full verification."
             } catch (e: Exception) {
                 error = e.message
             } finally {

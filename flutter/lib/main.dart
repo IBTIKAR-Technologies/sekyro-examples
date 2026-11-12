@@ -48,7 +48,9 @@ class _ExampleScreenState extends State<ExampleScreen> {
     super.dispose();
   }
 
-  Future<void> _start() async {
+  // Every action creates its session on the tap, never on render. Sekyro.start returns the finished result only
+  // after the person presses the result screen's button.
+  Future<void> _start(Future<CreatedSession> Function() create) async {
     setState(() {
       _busy = true;
       _error = null;
@@ -59,7 +61,7 @@ class _ExampleScreenState extends State<ExampleScreen> {
     _poll++;
     try {
       // The client token is a one-time credential: it is handed to the SDK and never shown or logged.
-      final session = await widget.server.createSession();
+      final session = await create();
       setState(() => _sessionId = session.sessionId);
       final result = await Sekyro.start(SekyroConfig(
         clientToken: session.clientToken,
@@ -76,6 +78,9 @@ class _ExampleScreenState extends State<ExampleScreen> {
             SekyroFailed(:final code) => 'failed: $code',
           });
       unawaited(_pollVerdict(session.sessionId));
+    } on FallbackException catch (e) {
+      // Not re-checkable (not returningReady, revoked, stale): the person runs a full verification instead.
+      setState(() => _error = '${e.message} Tap Verify to run a full verification.');
     } on PlatformException catch (e) {
       setState(() => _error = 'Could not start: ${e.code}');
     } catch (e) {
@@ -113,7 +118,13 @@ class _ExampleScreenState extends State<ExampleScreen> {
           children: [
             Text(exampleServerUrl(), key: const Key('server')),
             const SizedBox(height: 12),
-            FilledButton(key: const Key('start'), onPressed: _busy ? null : _start, child: const Text('Start verification')),
+            const Text('Signed in as Demo user 1'),
+            FilledButton(
+                key: const Key('start'), onPressed: _busy ? null : () => _start(widget.server.createSession), child: const Text('Verify')),
+            OutlinedButton(
+                key: const Key('recheck'),
+                onPressed: _busy ? null : () => _start(widget.server.createRecheck),
+                child: const Text('Confirm it is you')),
             if (_error != null) Text(_error!, key: const Key('error'), style: TextStyle(color: Theme.of(context).colorScheme.error)),
             if (sessionId != null) SelectableText('Session $sessionId', key: const Key('session')),
             if (_result != null) Text('SDK result: $_result', key: const Key('result')),

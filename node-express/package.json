@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sekyro/node": "1.0.0-rc.18",
+    "@sekyro/node": "1.0.0-rc.22",
     "express": "5.2.1"
   },
   "devDependencies": {

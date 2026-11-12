@@ -17,9 +17,12 @@ test("start, skip with test data, verified", async ({ page }) => {
 
   await element.getByRole("button", { name: "Skip with test data" }).click();
   await expect(page.locator("pre")).toContainText('"lastStep": "result"');
-  // The server's verdict (polled every 3 s) is final: the flow gives way to the summary.
+  // The server's verdict (polled every 3 s) is final, and the result screen stays until the person presses its button.
   await expect(page.locator("pre")).toContainText('"status": "verified"', { timeout: 10_000 });
+  await expect(element).toHaveCount(1);
+  await element.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(element).toHaveCount(0);
+  await expect(page.getByRole("status")).toContainText("You are verified.");
   expect(fixture.calls).toContain("POST /sessions");
 });
 

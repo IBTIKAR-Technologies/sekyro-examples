@@ -54,7 +54,10 @@ final class ExampleServerTests: XCTestCase {
         XCTAssertEqual(created.sessionId, "s1")
         XCTAssertEqual(StubProtocol.lastRequest?.httpMethod, "POST")
         XCTAssertEqual(StubProtocol.lastRequest?.url?.absoluteString, "http://server.test/sessions")
-        XCTAssertEqual(try JSONDecoder().decode([String: String].self, from: StubProtocol.lastBody ?? Data()), ["locale": "fr"])
+        let sent = try JSONDecoder().decode([String: String].self, from: StubProtocol.lastBody ?? Data())
+        XCTAssertEqual(sent["locale"], "fr")
+        XCTAssertEqual(sent["userId"], "demo-user-1")
+        XCTAssertNotNil(sent["attemptId"])
     }
 
     func testRefusesASessionWithoutAClientToken() async {

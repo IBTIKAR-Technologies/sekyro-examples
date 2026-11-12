@@ -22,7 +22,9 @@ final class ExampleModel: ObservableObject {
     let server = ExampleServer.configured()
     private var polling: Task<Void, Never>?
 
-    func start() {
+    /// Every action creates its session on the tap, never on render. SekyroKit calls onResult with the finished
+    /// result only after the person presses the result screen's button.
+    func start(_ create: @escaping () async throws -> CreatedSession) {
         busy = true
         error = nil
         events = []
@@ -33,7 +35,7 @@ final class ExampleModel: ObservableObject {
             defer { busy = false }
             do {
                 // The client token is a one-time credential: it is handed to the SDK and never shown or logged.
-                let session = try await server.createSession()
+                let session = try await create()
                 sessionId = session.sessionId
                 flow = Flow(id: session.sessionId, config: SekyroConfig(clientToken: session.clientToken))
             } catch {
@@ -95,9 +97,13 @@ struct ContentView: View {
             List {
                 Section {
                     Text(model.server.baseURL.absoluteString).font(.footnote).foregroundColor(.secondary)
-                    Button("Start verification") { model.start() }
+                    Text("Signed in as Demo user 1")
+                    Button("Verify") { model.start { try await model.server.createSession() } }
                         .disabled(model.busy)
                         .accessibilityIdentifier("start")
+                    Button("Confirm it is you") { model.start { try await model.server.createRecheck() } }
+                        .disabled(model.busy)
+                        .accessibilityIdentifier("recheck")
                     if let error = model.error { Text(error).foregroundColor(.red).accessibilityIdentifier("error") }
                 }
                 if let sessionId = model.sessionId {

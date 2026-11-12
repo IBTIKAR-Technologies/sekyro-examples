@@ -34,7 +34,7 @@ describe('exampleServer', () => {
     await createExampleServer('http://server.test/', impl).createSession('fr');
     expect(calls[0].url).toBe('http://server.test/sessions');
     expect(calls[0].init?.method).toBe('POST');
-    expect(calls[0].init?.body).toBe('{"locale":"fr"}');
+    expect(JSON.parse(String(calls[0].init?.body))).toMatchObject({ userId: 'demo-user-1', locale: 'fr', attemptId: expect.any(String) });
   });
 
   it('fails on an error status', async () => {

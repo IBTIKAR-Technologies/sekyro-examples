@@ -3,6 +3,7 @@ package ai.sekyro.examples.androidcompose
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -26,15 +27,29 @@ data class SessionView(
     val reason: String? = null,
     val closedBy: String? = null,
     val personId: String? = null,
+    /** What the server decided (`decision.show`, for example `in_review` or `try_again`). */
+    val decision: Decision? = null,
 ) {
+    @Serializable
+    data class Decision(val show: String, val canRetry: Boolean = false)
+
     /** True once the server has a final verdict (the session will not change any more). */
     val isTerminal: Boolean get() = status == "verified" || status == "not_verified"
 
     val summary: String
-        get() = listOfNotNull(status, reason, closedBy?.let { "closed by $it" }, personId?.let { "person $it" }).joinToString(" · ")
+        get() = listOfNotNull(decision?.show, status, reason, closedBy?.let { "closed by $it" }, personId?.let { "person $it" }).joinToString(" · ")
 }
 
-class ExampleServerException(message: String) : Exception(message)
+open class ExampleServerException(message: String) : Exception(message)
+
+/** A refused re-check: the person needs a full verification first. The message says why. */
+class FullVerificationNeeded(message: String) : ExampleServerException(message)
+
+@Serializable
+private data class Refusal(val next: String? = null, val message: String? = null)
+
+/** The demo user this app is signed in as: a fixed id, no personal data. It is the person's externalRef. */
+const val DEMO_USER_ID = "demo-user-1"
 
 /** Sends one HTTP request and returns the status code and the body. Swapped for a fake in the unit tests. */
 fun interface Transport {
@@ -68,14 +83,29 @@ object HttpTransport : Transport {
 class ExampleServer(baseUrl: String, private val transport: Transport = HttpTransport) {
     val baseUrl: String = baseUrl.trimEnd('/')
 
-    suspend fun createSession(locale: String? = null): CreatedSession =
-        decode(request("POST", "/sessions", if (locale == null) "{}" else json.encodeToString(mapOf("locale" to locale))))
+    /** A full verification for the demo user, created when the person taps Verify. One idempotency key per tap. */
+    suspend fun createSession(locale: String? = null): CreatedSession {
+        val body = buildMap {
+            put("userId", DEMO_USER_ID)
+            put("attemptId", UUID.randomUUID().toString())
+            if (locale != null) put("locale", locale)
+        }
+        return decode(request("POST", "/sessions", json.encodeToString(body)))
+    }
+
+    /** "Confirm it is you" for a returning person, on any device. Throws [FullVerificationNeeded] when it is not possible. */
+    suspend fun createRecheck(): CreatedSession =
+        decode(request("POST", "/sessions/recheck", json.encodeToString(mapOf("userId" to DEMO_USER_ID, "attemptId" to UUID.randomUUID().toString()))))
 
     suspend fun getSession(id: String): SessionView = decode(request("GET", "/sessions/${escape(id)}"))
 
     /** A JSON call to the server; FinishWithTestData.kt (debug builds only) uses it for its one route. */
     suspend fun request(method: String, path: String, body: String? = null): String = withContext(Dispatchers.IO) {
         val (code, text) = transport.send(method, baseUrl + path, body)
+        if (code == 409) {
+            val refusal = runCatching { json.decodeFromString<Refusal>(text) }.getOrNull()
+            if (refusal?.next == "full_verification") throw FullVerificationNeeded(refusal.message ?: "Please verify in full.")
+        }
         if (code !in 200..299) throw ExampleServerException("$method $path answered $code")
         text
     }

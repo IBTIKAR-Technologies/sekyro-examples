@@ -23,6 +23,7 @@ const app = createApp({
   apiKey,
   ...(webhookSecret ? { webhookSecret } : {}),
   ...(process.env.SEKYRO_FLOW ? { flow: process.env.SEKYRO_FLOW } : {}),
+  ...(process.env.SEKYRO_STEP_UP_FLOW ? { stepUpFlow: process.env.SEKYRO_STEP_UP_FLOW } : {}),
   uiOrigins: (process.env.EXAMPLE_UI_ORIGINS ?? "")
     .split(",")
     .map((origin) => origin.trim())
