@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@sekyro/elements": "0.1.0-rc.5",
-    "@sekyro/web": "0.1.0-rc.27",
+    "@sekyro/web": "0.1.0-rc.28",
     "vue": "3.5.22"
   },
   "devDependencies": {

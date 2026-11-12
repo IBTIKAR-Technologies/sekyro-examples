@@ -14,7 +14,7 @@ shows or logs.
 - The [`node-express`](../node-express) example running with a Sandbox key (`SEKYRO_API_KEY`)
 
 SekyroKit comes from Swift Package Manager: `https://github.com/IBTIKAR-Technologies/sekyro-ios-dist`, exact version
-`0.1.0-rc.18` (see `project.yml`).
+`0.1.0-rc.20` (see `project.yml`).
 
 ## Run
 

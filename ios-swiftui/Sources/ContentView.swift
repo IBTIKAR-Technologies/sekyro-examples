@@ -56,7 +56,7 @@ final class ExampleModel: ObservableObject {
     func onResult(_ sdkResult: SekyroResult) {
         flow = nil
         switch sdkResult {
-        case let .finished(_, displayStatus, reason, _, _, _):
+        case let .finished(_, displayStatus, reason, _, _, _, _):
             result = "finished: \(displayStatus.rawValue)" + (reason.map { " (\($0.rawValue))" } ?? "")
         case .cancelled: result = "cancelled"
         case let .failed(code): result = "failed: \(code)"

@@ -9,7 +9,7 @@ options:
 packages:
   SekyroKit:
     url: https://github.com/IBTIKAR-Technologies/sekyro-ios-dist
-    exactVersion: 0.1.0-rc.18
+    exactVersion: 0.1.0-rc.20
 targets:
   Example:
     type: application
