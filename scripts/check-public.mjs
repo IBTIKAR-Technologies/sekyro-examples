@@ -66,7 +66,7 @@ function listFiles(dir) {
 }
 
 // A `file:` tarball committed under the published tree's own vendor/ directory resolves for
-// public users too (e.g. vendor/deepmerge-4.3.1-cve-2026-93753.tgz, a patched build of a
+// public users too (e.g. vendor/deepmerge-4.3.1-cve-2026-93753.1.tgz, a patched build of a
 // dependency with no fixed upstream release). Anything else stays a local dependency.
 function isVendoredTarball(pkgFile, spec) {
   const m = /^file:(.+\.tgz)$/.exec(String(spec));
