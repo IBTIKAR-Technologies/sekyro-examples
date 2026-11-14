@@ -20,19 +20,23 @@
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.3",
     "@babel/runtime": "^7.25.0",
-    "@react-native-community/cli": "20.1.0",
-    "@react-native-community/cli-platform-android": "20.1.0",
-    "@react-native-community/cli-platform-ios": "20.1.0",
+    "@react-native-community/cli": "20.2.0",
+    "@react-native-community/cli-platform-android": "20.2.0",
+    "@react-native-community/cli-platform-ios": "20.2.0",
     "@react-native/babel-preset": "0.84.1",
     "@react-native/metro-config": "0.84.1",
     "@react-native/typescript-config": "0.84.1",
     "@types/jest": "^29.5.13",
     "@types/react": "^19.2.0",
     "babel-plugin-transform-inline-environment-variables": "0.4.4",
+    "deepmerge": "file:../vendor/deepmerge-4.3.1-cve-2026-93753.tgz",
     "jest": "^29.6.3",
     "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">= 22.11.0"
+  },
+  "overrides": {
+    "deepmerge": "$deepmerge"
   }
 }

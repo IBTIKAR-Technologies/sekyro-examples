@@ -5,7 +5,8 @@
 //   node examples/scripts/check-public.mjs [dir ...]   (default: the whole examples/ tree)
 //
 // Fails on: secrets and real data (the docs sync's rules), links to private
-// repositories or paths outside the samples, `file:` / `path:` dependencies,
+// repositories or paths outside the samples, `file:` / `path:` dependencies
+// (except tarballs committed under this tree's own vendor/ directory),
 // and the Sandbox test API used outside a development-only guard.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -64,6 +65,16 @@ function listFiles(dir) {
   }
 }
 
+// A `file:` tarball committed under the published tree's own vendor/ directory resolves for
+// public users too (e.g. vendor/deepmerge-4.3.1-cve-2026-93753.tgz, a patched build of a
+// dependency with no fixed upstream release). Anything else stays a local dependency.
+function isVendoredTarball(pkgFile, spec) {
+  const m = /^file:(.+\.tgz)$/.exec(String(spec));
+  if (!m) return false;
+  const target = resolve(dirname(pkgFile), m[1]);
+  return dirname(target) === join(examplesRoot, "vendor") && existsSync(target);
+}
+
 const problems = [];
 const report = (file, what) => problems.push(`${relative(process.cwd(), file)}: ${what}`);
 
@@ -85,7 +96,9 @@ function checkFile(file) {
     const pkg = JSON.parse(text);
     for (const field of ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"]) {
       for (const [dep, spec] of Object.entries(pkg[field] ?? {})) {
-        if (/^(?:file|link|workspace|portal):/.test(String(spec))) report(file, `${dep} is a local dependency (${spec})`);
+        if (/^(?:file|link|workspace|portal):/.test(String(spec)) && !isVendoredTarball(file, spec)) {
+          report(file, `${dep} is a local dependency (${spec})`);
+        }
       }
     }
   }

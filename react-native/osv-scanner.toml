@@ -1,0 +1,7 @@
+# osv-scanner configuration for react-native/package-lock.json.
+
+# deepmerge 4.3.1 is installed from vendor/deepmerge-4.3.1-cve-2026-93753.tgz, not from the npm registry.
+# OSV matches the lockfile name+version only, so it cannot see the vendored fix.
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+reason = "deepmerge is vendored from vendor/deepmerge-4.3.1-cve-2026-93753.tgz = upstream 4.3.1 + the unreleased upstream fix (TehShrike/deepmerge PR #274, drops __proto__ keys). sha256 5c637c33…; PoC verified blocked."
