@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sekyro/web": "0.1.0-rc.37"
+    "@sekyro/web": "0.1.0-rc.39"
   },
   "devDependencies": {
     "typescript": "5.9.3",

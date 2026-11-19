@@ -53,7 +53,7 @@ android {
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11) } }
 
 dependencies {
-    implementation(platform("ai.sekyro:sekyro-bom:0.1.0-rc.27"))
+    implementation(platform("ai.sekyro:sekyro-bom:0.1.0-rc.28"))
     implementation("ai.sekyro:sekyro-ui")
 
     implementation(platform("androidx.compose:compose-bom:2025.06.00"))
