@@ -73,7 +73,7 @@ describe("POST /sessions", () => {
     const res = await fetch(`${base}/sessions`, {
       method: "POST",
       headers: { "content-type": "application/json", origin: "http://localhost:5173" },
-      body: JSON.stringify({ locale: "fr", attemptId: "attempt_unit_test" }),
+      body: JSON.stringify({ userId: "demo-user-1", locale: "fr", attemptId: "attempt_unit_test" }),
     });
     expect(res.status).toBe(201);
     expect(res.headers.get("access-control-allow-origin")).toBe("http://localhost:5173");
@@ -81,10 +81,23 @@ describe("POST /sessions", () => {
     const [, init] = api.mock.calls[0]!;
     const sent = JSON.parse(String(init?.body)) as { locale?: string; person?: { externalRef?: string } };
     expect(sent.locale).toBe("fr");
-    // No externalRef in the request: the sample generates one standing in for your user id.
-    expect(sent.person?.externalRef).toMatch(/^user_[0-9a-f-]{36}$/);
+    // The demo user's id is the person's externalRef.
+    expect(sent.person?.externalRef).toBe("demo-user-1");
     // The click's attemptId is the idempotency key, so a retry of this click returns the same session.
     expect(new Headers(init?.headers).get("x-idempotency-key")).toBe("attempt_unit_test");
+  });
+
+  it("refuses a request without a user id or an externalRef, and creates nothing", async () => {
+    const api = fakeApi({});
+    const base = await start("sk_test_unit", api);
+    const res = await fetch(`${base}/sessions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ locale: "fr" }),
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: "external_ref_required" });
+    expect(api).not.toHaveBeenCalled();
   });
 
   it("forwards the externalRef of the request as person.externalRef", async () => {

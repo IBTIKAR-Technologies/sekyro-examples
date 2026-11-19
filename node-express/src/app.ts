@@ -148,8 +148,13 @@ export function createApp(config: AppConfig): express.Express {
     const requested: unknown = req.body?.locale;
     const locale = LOCALES.find((l) => l === requested);
     // Your own id for the person: the demo user's id, else the request's externalRef (`sekyro doctor`
-    // sends one), else a random id standing in for your user id.
-    const externalRef = userIdOf(req.body) ?? externalRefOf(req.body) ?? `user_${randomUUID()}`;
+    // sends one). In your app it is the signed-in user's id. Without one there is nobody to link the
+    // session to, so the request is refused.
+    const externalRef = userIdOf(req.body) ?? externalRefOf(req.body);
+    if (!externalRef) {
+      res.status(400).json({ error: "external_ref_required" });
+      return;
+    }
     // One idempotency key per click: the page sends the same attemptId when it retries after a
     // network error, so a retry returns the session already created instead of a second one.
     const created = await sekyro.sessions.create(
