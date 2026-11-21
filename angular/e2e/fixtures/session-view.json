@@ -281,7 +281,6 @@
       },
       "liveMrz": {
         "enabled": false,
-        "arm": "control",
         "minEngine": "sekyro-ocr-1",
         "detectorLimit": 960,
         "bandMaxWidthPx": 1280,
@@ -301,7 +300,6 @@
       },
       "frontLock": {
         "enabled": false,
-        "arm": "control",
         "minEngine": "sekyro-ocr-1",
         "detectorLimit": 960,
         "maxWidthPx": 480,
