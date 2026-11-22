@@ -159,10 +159,10 @@ packages:
     dependency: "direct main"
     description:
       name: sekyro_flutter
-      sha256: "18419081f6b2ca8f309632df5a248b4a3895ad1fcc346d1136f2ac372955da30"
+      sha256: ccdf2b616d5f128257adee57349ff3c17fbf819546bb9c2d7e12b4e4e3140cd9
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.0-rc.23"
+    version: "0.1.0-rc.25"
   sky_engine:
     dependency: transitive
     description: flutter

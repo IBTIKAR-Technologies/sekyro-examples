@@ -17,9 +17,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sekyro/node": "1.0.0-rc.28",
-    "@sekyro/react": "0.1.0-rc.37",
-    "@sekyro/web": "0.1.0-rc.39",
+    "@sekyro/node": "1.0.0-rc.32",
+    "@sekyro/react": "0.1.0-rc.42",
+    "@sekyro/web": "0.1.0-rc.44",
     "next": "16.4.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
