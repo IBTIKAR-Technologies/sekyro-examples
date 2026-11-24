@@ -43,7 +43,7 @@ browser once with `npx playwright install chromium`).
 In `npm start` (a development build), a **Finish with test data** button appears under the flow. It calls
 `POST /demo/finish/:id` on the server, which ends the Sandbox session `verified`, and the verdict updates.
 `src/app/finish-with-test-data.component.ts` is imported only when `ngDevMode` is on, so `npm run build` leaves it
-out. The flow's own **Skip with test data** action does the same from inside a Sandbox session.
+out. The flow's own **Skip with test data** action does the same from inside a Sandbox session on test data.
 
 ## Receive the webhook
 
@@ -72,7 +72,7 @@ Each part follows a rule of [Best practices](https://docs.sekyro.ai/en/getting-s
 | Handle every outcome | `decide()` has a branch for every status and every `not_verified` reason, with what to show and whether to offer a new session. An expired link (`closedBy: expiry`) shows as expired. |
 | Let the result screen finish | The flow stays on screen until the person presses the Continue button on the result screen; the verdict is refreshed from the server when the SDK reports a result. |
 | Decide on assurance and verify the token | A verified session counts only when its assurance is in the accepted list. The server verifies the result token. |
-| Re-check returning people | Confirm it is you creates a `person.reuse` re-check by `externalRef` when the person is `returningReady`. Otherwise, or on `subject_revoked` or `subject_stale`, the person gets a full verification with a clear message. A face that does not match ends `rejected`: no retry loop. |
+| Re-check returning people | Confirm it is you creates a `person.reuse` re-check by `externalRef` when the person is `returningReady`. Otherwise, or on `person_revoked` or `person_stale`, the person gets a full verification with a clear message. A face that does not match ends `rejected`: no retry loop. |
 | Handle limits and code refusals | A `429` answers `retryAfterSeconds`; the SDK screens explain refused phone and email codes. |
 | Test every outcome | See below. |
 

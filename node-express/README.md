@@ -8,7 +8,7 @@ in this repository talks to:
 | `POST /sessions` | Creates a session (`{ "userId"?: "demo-user-1", "locale"?: "en", "externalRef"?: "<your user id>" }`). A demo `userId` becomes the `externalRef`. `externalRef` goes to Sekyro AI as `person.externalRef`, your own id for the person, which a flow can require. Without a `userId` or an `externalRef` it answers `400 { "error": "external_ref_required" }`; in your app, pass the signed-in user's id. It returns `{ sessionId, clientToken, expiresAt }`. The client token goes to the device that runs the flow, once. |
 | | Call it when the person clicks Start, never on render. Send an `attemptId` made once per click (8 to 100 letters, digits, `_` or `-`) and send it again when you retry after a network error: it is the idempotency key, so the retry returns the same session. A `429` answers `{ error, retryAfterSeconds }`. |
 | `GET /users`, `GET /users/:id` | The fixed demo users, and one user's stored state: Sekyro AI person id, latest session, status, reason and decision (written by the webhook and by this server's reads), plus `returningReady`, `level` and `assurance` from `GET /people?externalRef=`. |
-| `POST /sessions/recheck` | "Confirm it is you" (`{ "userId": "demo-user-1" }` or `{ "externalRef": "<your user id>" }`): liveness and a face match against the portrait stored at the person's last full verification, on any device. A person who is not `returningReady`, or a create refused with `subject_not_found`, `subject_no_reference`, `subject_stale`, `reuse_disabled` or `subject_revoked`, answers `409` with `next: "full_verification"` and a `message`. |
+| `POST /sessions/recheck` | "Confirm it is you" (`{ "userId": "demo-user-1" }` or `{ "externalRef": "<your user id>" }`): liveness and a face match against the portrait stored at the person's last full verification, on any device. A person who is not `returningReady`, or a create refused with `person_not_found`, `person_no_reference`, `person_stale`, `reuse_disabled` or `person_revoked`, answers `409` with `next: "full_verification"` and a `message`. |
 | `POST /sessions/step-up` | "Raise to Identity": a `step_up` on `SEKYRO_STEP_UP_FLOW` (default `identity`), same body and same fallback. |
 | `GET /sessions/:id` | The verdict that counts: `status`, `reason`, `closedBy`, `personId`, and for a verified session the claims of the signed result token, checked with `verifyResultToken` against your key's app and environment. `decision` says what to do: `access`, what to `show`, and `canRetry` for a new session, for every status and reason (`src/decide.ts`, with the accepted assurance list). |
 | `POST /webhooks/sekyro` | Receives webhooks, checks the signature with `verifyWebhook` over the raw body, logs each event. |
@@ -59,8 +59,9 @@ curl -X POST localhost:4000/demo/finish/<sessionId>
 curl localhost:4000/sessions/<sessionId>     # "status": "verified"
 ```
 
-The route calls `sekyro.test.sessions.simulate(id, { status: "verified" })`. Sekyro AI refuses it for a Live key, and this
-server refuses it before calling when the key is not a Sandbox key.
+The route calls `sekyro.test.sessions.simulate(id, { status: "verified" })`. Sekyro AI refuses it for a Live key and
+for a session in tester mode (`409 session_bound`), and this server refuses it before calling when the key is not a
+Sandbox key.
 
 ## Receive the webhook
 
@@ -98,7 +99,7 @@ Each part follows a rule of [Best practices](https://docs.sekyro.ai/en/getting-s
 | Handle every outcome | `decide()` has a branch for every status and every `not_verified` reason, with what to show and whether to offer a new session. An expired link (`closedBy: expiry`) shows as expired. |
 | Let the result screen finish | The flow stays on screen until the person presses the result button; the verdict is refreshed from the server when the SDK reports a result. |
 | Decide on assurance and verify the token | A verified session counts only when its assurance is in the accepted list. The server verifies the result token. |
-| Re-check returning people | Confirm it is you creates a `person.reuse` re-check by `externalRef` when the person is `returningReady`. Otherwise, or on `subject_revoked` or `subject_stale`, the person gets a full verification with a clear message. A face that does not match ends `rejected`: no retry loop. Raise to Identity creates a `step_up`. |
+| Re-check returning people | Confirm it is you creates a `person.reuse` re-check by `externalRef` when the person is `returningReady`. Otherwise, or on `person_revoked` or `person_stale`, the person gets a full verification with a clear message. A face that does not match ends `rejected`: no retry loop. Raise to Identity creates a `step_up`. |
 | Handle limits and code refusals | A `429` answers `retryAfterSeconds`; the SDK screens explain refused phone and email codes. |
 | Test every outcome | See below. |
 

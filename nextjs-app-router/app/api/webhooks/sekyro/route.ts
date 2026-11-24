@@ -21,12 +21,13 @@ export async function POST(request: Request): Promise<Response> {
   const receivedAt = new Date().toISOString();
   try {
     const envelope = verifyWebhook(rawBody, signatureFromHeaders(request.headers), secret);
-    const data = envelope.data as { sessionId?: string; status?: string };
-    remember({ id: envelope.id, event: envelope.event, sessionId: data.sessionId ?? null, status: data.status ?? null, receivedAt, signature: "ok" });
-    console.log(`webhook ${envelope.event} ${data.sessionId ?? ""} signature ok`);
+    // A session event names its session `data.id`, as `GET /sessions/{id}` does.
+    const data = envelope.data as { id?: string; status?: string };
+    const sessionId = envelope.event.startsWith("session.") ? data.id : undefined;
+    remember({ id: envelope.id, event: envelope.event, sessionId: sessionId ?? null, status: data.status ?? null, receivedAt, signature: "ok" });
+    console.log(`webhook ${envelope.event} ${sessionId ?? ""} signature ok`);
     // Deliveries are at least once: handle each event id once. Events can arrive out of order,
     // so never apply the event's status: re-read the session after answering.
-    const sessionId = data.sessionId;
     if (firstDelivery(envelope.id) && sessionId) {
       after(async () => {
         // The current state of the session, decided on this server, written to its user.

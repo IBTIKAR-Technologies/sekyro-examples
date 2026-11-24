@@ -35,11 +35,11 @@ const LOCALES = ["ar", "fr", "en", "es", "pt", "de"] as const;
 /** Why a known person cannot use a re-check or step-up now: the page offers a full verification. */
 const FALLBACK: Record<string, string> = {
   not_returning_ready: "We need a full verification first: there is no recent verified portrait to compare with.",
-  subject_not_found: "We need a full verification first: this person has not passed one yet.",
-  subject_no_reference: "We need a full verification first: there is no verified portrait to compare with.",
-  subject_stale: "The last full verification is too old. Please verify again in full.",
+  person_not_found: "We need a full verification first: this person has not passed one yet.",
+  person_no_reference: "We need a full verification first: there is no verified portrait to compare with.",
+  person_stale: "The last full verification is too old. Please verify again in full.",
   reuse_disabled: "This flow does not re-check returning people. Please verify in full.",
-  subject_revoked: "This verification was withdrawn. Please verify again in full.",
+  person_revoked: "This verification was withdrawn. Please verify again in full.",
   step_up_flow_too_weak: "The step-up flow does not prove Identity on every path. Set SEKYRO_STEP_UP_FLOW to an Identity flow.",
 };
 
@@ -69,7 +69,7 @@ export async function readUser(userId: string): Promise<UserView> {
     personId: person?.id ?? state.personId,
     returningReady: person?.returningReady ?? false,
     level: person?.level ?? null,
-    assurance: person?.levelAssurance ?? null,
+    assurance: person?.assurance ?? null,
   };
 }
 

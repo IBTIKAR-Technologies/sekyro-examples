@@ -55,7 +55,7 @@ const envelope = JSON.stringify({
   createdAt: new Date().toISOString(),
   orgId: "org_unit_test",
   env: "sandbox",
-  data: { sessionId: SESSION_ID, status: "verified" },
+  data: { id: SESSION_ID, status: "verified" },
 });
 
 describe("POST /sessions", () => {
@@ -209,7 +209,7 @@ describe("POST /sessions/recheck", () => {
     expect(api).toHaveBeenCalledTimes(1);
   });
 
-  it.each(["subject_revoked", "subject_stale"])("falls back to a full verification on %s", async (code) => {
+  it.each(["person_revoked", "person_stale"])("falls back to a full verification on %s", async (code) => {
     const api = fakeApi({
       "GET /people": person(true),
       "POST /sessions": { status: 409, body: { success: false, error: { code, message: code } } },

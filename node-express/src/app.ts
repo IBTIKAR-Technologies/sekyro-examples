@@ -89,23 +89,24 @@ export function createApp(config: AppConfig): express.Express {
     const receivedAt = new Date().toISOString();
     try {
       const envelope = verifyWebhook(rawBody, signatureFromHeaders(req.headers), config.webhookSecret);
-      const data = envelope.data as { sessionId?: string; status?: string };
+      // A session event names its session `data.id`, as `GET /sessions/{id}` does.
+      const data = envelope.data as { id?: string; status?: string };
+      const sessionId = envelope.event.startsWith("session.") ? data.id : undefined;
       remember(events, {
         id: envelope.id,
         event: envelope.event,
-        sessionId: data.sessionId ?? null,
+        sessionId: sessionId ?? null,
         status: data.status ?? null,
         receivedAt,
         signature: "ok",
       });
-      console.log(`webhook ${envelope.event} ${data.sessionId ?? ""} signature ok`);
+      console.log(`webhook ${envelope.event} ${sessionId ?? ""} signature ok`);
       // Acknowledge fast, then do the work.
       res.sendStatus(200);
       if (seen.has(envelope.id)) return; // a retry of an event already handled
       seen.add(envelope.id);
       // Events can arrive out of order: never apply the event's status, re-read the session.
-      if (data.sessionId) {
-        const sessionId = data.sessionId;
+      if (sessionId) {
         sekyro.sessions
           .get(sessionId)
           .then((session) => verdict(config, session))
@@ -139,7 +140,7 @@ export function createApp(config: AppConfig): express.Express {
       // verification is within the flow's "Returning users" maximum age.
       returningReady: person?.returningReady ?? false,
       level: person?.level ?? null,
-      assurance: person?.levelAssurance ?? null,
+      assurance: person?.assurance ?? null,
     });
   }));
 
@@ -297,11 +298,11 @@ async function verdict(config: AppConfig, session: Session): Promise<SessionVerd
 /** Why a known person cannot use a re-check or step-up now: the page offers a full verification. */
 const FALLBACK: Record<string, string> = {
   not_returning_ready: "We need a full verification first: there is no recent verified portrait to compare with.",
-  subject_not_found: "We need a full verification first: this person has not passed one yet.",
-  subject_no_reference: "We need a full verification first: there is no verified portrait to compare with.",
-  subject_stale: "The last full verification is too old. Please verify again in full.",
+  person_not_found: "We need a full verification first: this person has not passed one yet.",
+  person_no_reference: "We need a full verification first: there is no verified portrait to compare with.",
+  person_stale: "The last full verification is too old. Please verify again in full.",
   reuse_disabled: "This flow does not re-check returning people. Please verify in full.",
-  subject_revoked: "This verification was withdrawn. Please verify again in full.",
+  person_revoked: "This verification was withdrawn. Please verify again in full.",
   step_up_flow_too_weak: "The step-up flow does not prove Identity on every path. Set SEKYRO_STEP_UP_FLOW to an Identity flow.",
 };
 
