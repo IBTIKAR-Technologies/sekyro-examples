@@ -94,7 +94,7 @@ A re-check works on any device: the person films a new live capture, and Sekyro 
   ```sh
   curl -sS https://api.sekyro.ai/api/v2/sessions/<session id>/simulate \
     -H "Authorization: Bearer $SEKYRO_API_KEY" -H "Content-Type: application/json" \
-    -H "X-Idempotency-Key: $(uuidgen)" -d '{ "status": "not_verified", "reason": "rejected" }'
+    -H "X-Idempotency-Key: <a new UUID>" -d '{ "status": "not_verified", "reason": "rejected" }'
   ```
 
   The webhook reaches the server, which re-reads the session; the page shows the matching message.
